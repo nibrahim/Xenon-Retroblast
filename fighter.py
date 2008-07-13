@@ -111,7 +111,7 @@ def startShooter(disturbance):
     sprites.Particle.containers = all,jgroup
     sprites.Explosion.containers = all,jgroup
     sprites.StatusPanel.containers = all
-    spanel = sprites.StatusPanel()
+    spanel = sprites.StatusPanel(ship)
     multiplier = 1
     sg = sprites.SteamGun(constants.TOP,[all,jgroup],[weapons,all,jgroup])
 #     l1 = sprites.MineGun(constants.RIGHT,[all,jgroup],[weapons,all,jgroup])
@@ -119,20 +119,21 @@ def startShooter(disturbance):
     ship.attach(sg)
 #     ship.attach(l1)
 #     ship.attach(l2)
-    t=0
-    for i in range(5):
-        if t==0:
-            l1 = sprites.MineGun(constants.RIGHT,[all,jgroup],[weapons,all,jgroup])
-            ship.attach(l1)
-            l1 = sprites.Laser(constants.LEFT,[all,jgroup],[weapons,all,jgroup])
-            ship.attach(l1)
-            t = 1
-        else:
-            l1 = sprites.MineGun(constants.LEFT,[all,jgroup],[weapons,all,jgroup])
-            ship.attach(l1)
-            l1 = sprites.Laser(constants.RIGHT,[all,jgroup],[weapons,all,jgroup])
-            ship.attach(l1)
-            t = 0
+#     t=0
+#     for i in range(5):
+#         if t==0:
+#             l1 = sprites.MineGun(constants.RIGHT,[all,jgroup],[weapons,all,jgroup])
+#             ship.attach(l1)
+#             l1 = sprites.Laser(constants.LEFT,[all,jgroup],[weapons,all,jgroup])
+#             ship.attach(l1)
+#             t = 1
+#         else:
+#             l1 = sprites.MineGun(constants.LEFT,[all,jgroup],[weapons,all,jgroup])
+#             ship.attach(l1)
+#             l1 = sprites.Laser(constants.RIGHT,[all,jgroup],[weapons,all,jgroup])
+#             ship.attach(l1)
+#             t = 0
+    deadtimer = 100
     while 1:
         clock.tick(30)
         for event in pygame.event.get():
@@ -169,11 +170,13 @@ def startShooter(disturbance):
             sprites.Romulan(ship,enemies).add(all,jgroup,enemies)
         # Check collisions
         pygame.sprite.groupcollide(enemies, weapons, True, False)
-#         if pygame.sprite.spritecollideany(ship,enemies):
-#             ship.decrement()
         if not ship.groups():
-            logging.debug("SHIP : We're dead!")
-            sys.exit()
+            deadtimer -= 1
+            if not deadtimer:
+                sys.exit(0)
+        else:
+            if pygame.sprite.spritecollide(ship,enemies,True):
+                ship.decrement()
         pygame.display.flip()
 
 def initLogger():
@@ -214,4 +217,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 

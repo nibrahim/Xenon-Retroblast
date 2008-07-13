@@ -4,7 +4,7 @@ import logging
 from pygame.locals import *
 import constants
 
-
+    
 
 class Particle(pygame.sprite.Sprite):
     def __init__(self, pos, vx, vy, ax, ay, size, colorstructure):
@@ -36,22 +36,25 @@ class Particle(pygame.sprite.Sprite):
             self.image = self.images.pop(0)
             
 class Explosion(pygame.sprite.Sprite):
-    def _getExplosionImages(self,spritefile,scale,colorkey = constants.BLACK):
+    def _getExplosionImages(self,spritefile,scale,size=48,colorkey = constants.BLACK):
         "Extract an array of images from the given sprite sheet."
         sheet = pygame.image.load(spritefile).convert_alpha()
         images = []
         rotation = random.randrange(0,180)
-        for i in range(0,768,48):
-            rect = pygame.Rect((i,0,48,48))
+        for i in range(0,768,size):
+            rect = pygame.Rect((i,0,size,size))
             image = pygame.Surface(rect.size).convert()
             image.blit(sheet, (0, 0), rect)
             if colorkey is not None:
                 image.set_colorkey(colorkey)
-            images.append(pygame.transform.rotate(pygame.transform.scale2x(image),rotation))
+            images.append(pygame.transform.rotate(pygame.transform.scale(image,(scale,scale)),rotation))
         return images
-    def __init__(self,pos,size,fr):
+    def __init__(self,pos,size,fr,colour = False):
         pygame.sprite.Sprite.__init__(self, self.containers)
-        self.images = self._getExplosionImages("%s/explosion.png"%constants.IMG_DIR,size*48)
+        if colour:
+            self.images = self._getExplosionImages("%s/colour-explosion.png"%constants.IMG_DIR,size*48)
+        else:
+            self.images = self._getExplosionImages("%s/explosion.png"%constants.IMG_DIR,size*48)
         self.image = self.images[0]
         self.rect = self.image.get_rect()
         self.rect.center = pos
@@ -93,7 +96,7 @@ class Romulan(pygame.sprite.Sprite):
         self.direction_counter += 1
         x,y = self.rect.center
         x,y = x+self.vx, y+self.vy
-        if x>1024 or y>714:
+        if x>1024 or y>752:
             pygame.sprite.Sprite.kill(self)
         self.rect.center = (x,y)
     def kill(self):
@@ -117,7 +120,7 @@ class DisturbanceSprite(pygame.sprite.Sprite):
         self.rect = self.image.get_rect()
     def update(self):
         dist_pos = (random.randrange(1024),
-                    random.randrange(714))
+                    random.randrange(752))
         dist_rot = random.randrange(180)
         self.image = pygame.transform.rotate(self.image, dist_rot).convert_alpha()
         self.rect.center = dist_pos
@@ -173,35 +176,16 @@ class ShipSprite(pygame.sprite.Sprite):
         cy+=self.vy
         if cx > 1024:
             cx = 1024
-        if cy > 645:
-            cy = 645
+        if cy > 700:
+            cy = 700
         if cx < 0:
             cx =0
         if cy < 0:
             cy = 0
         self.rect.center = (cx,cy)
-#         bounding_rect = self.rect
-#         logging.debug("Bouding rect is set to ship rect")
-#         logging.debug("Ship rect :: %s"%self.rect)
-#         logging.debug("Bounding rect :: %s"%bounding_rect)
-#         if self.weapons:
-#             logging.debug("Unionising with %s"%self.weapons)
-#             bounding_rect = self.rect.unionall([x.rect for x in self.weapons])
-#         logging.debug("Bounding rect after union :: %s"%bounding_rect)
-
         for i in self.weapons:
             i.rect.center = (cx + i.offset[0],
                              cy + i.offset[1])
-                             
-#             i.rect.center = (cx,cy)
-#             if i.position == constants.TOP:
-#                 i.rect.bottom = bounding_rect.top
-#             elif i.position == constants.BOTTOM:
-#                 i.rect.top = bounding_rect.bottom
-#             elif i.position == constants.LEFT:
-#                 i.rect.right = bounding_rect.left - 1
-#             elif i.position == constants.RIGHT:
-#                 i.rect.left = bounding_rect.right + 1
         self.vx *= 1.2
         self.vy *= 1.2
         if self.vx >= self.maxvel:
@@ -227,7 +211,7 @@ class ShipSprite(pygame.sprite.Sprite):
         logging.debug("WEAPON : Attaching %s"%weapon.name)
         weapon.ship = self
         bounding_rect = self.rect
-        logging.debug("ATTACH : Bounding rectange is %s centered at %s"%(str(bounding_rect),str(bounding_rect.center)))
+        logging.debug("ATTACH : Bounding rectangle is %s centered at %s"%(str(bounding_rect),str(bounding_rect.center)))
         if self.weapons:
             logging.debug("ATTACH : Unionising with following rects")
             for j in self.weapons:
@@ -250,8 +234,13 @@ class ShipSprite(pygame.sprite.Sprite):
             self.weapons.append(weapon)
         weapon.offset = (weapon.rect.center[0] - self.rect.center[0] ,
                          weapon.rect.center[1] - self.rect.center[1] )
-
-#         self.rect.unionall_ip([weapon.rect,self.rect])
+    def kill(self):
+        pygame.sprite.Sprite.kill(self)
+        x0,y0,x1,y1 = self.rect
+        for i in self.weapons:
+            i.kill()
+        for i in range(1,15):
+            Explosion((random.randrange(x0,x0+x1),random.randrange(y0,y0+y1)),random.randrange(1,5),1,True)
 
 
 class StarSprite(pygame.sprite.Sprite):
@@ -497,13 +486,29 @@ class MineGun(pygame.sprite.Sprite):
                 self.firing.kill()
                 self.firing = False
 
-            
+class EnergyBar(pygame.sprite.Sprite):
+    def __init__(self,ship):
+        pygame.sprite.Sprite.__init__(self, self.containers)
+        self.max_width = 500
+        self.image = pygame.Surface((500,10)).convert_alpha()
+        self.ship = ship
+        self.width = int((self.ship.energy/100) * self.max_width) 
+        pygame.draw.rect(self.image, (0,0,0), (0,0,self.width,10,),0)
+        pygame.draw.rect(self.image, (150,150,150), (0,0,self.width,10,),0)
+        self.rect = self.image.get_rect()
+        self.rect.topleft = (12,748)
+    def update(self):
+        self.width = int((self.ship.energy/100.0) * self.max_width)
+        pygame.draw.rect(self.image, (0,0,0), (0,0,self.max_width,10,),0)
+        pygame.draw.rect(self.image, (150,150,150), (0,0,self.width,10,),0)
+        
 class StatusPanel(pygame.sprite.Sprite):
-    def __init__(self):
+    def __init__(self,ship):
         pygame.sprite.Sprite.__init__(self, self.containers)
         self.image = pygame.image.load("%s/cpanel.png"%constants.IMG_DIR).convert_alpha()
         self.rect = self.image.get_rect()
-        self.rect.center = (512,714,)
-        
+        self.rect.center = (512,752,)
+        EnergyBar.containers = self.containers
+        self.energy_bar = EnergyBar(ship)
     
     
