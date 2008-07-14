@@ -101,6 +101,7 @@ class Romulan(pygame.sprite.Sprite):
         self.rect.center = (x,y)
     def kill(self):
         Explosion(self.rect.center,2,2)
+        self.ship.score += 5
 #         for i in range(20):
 #             c = random.randrange(0, 128)
 #             Particle(self.rect.center, random.randrange(-3, 3), random.randrange(-3, 0), random.randrange(-2,2), random.randrange(-2,2), random.randrange(4),
@@ -148,12 +149,13 @@ class ShipSprite(pygame.sprite.Sprite):
         self.image.set_colorkey(constants.BLACK)
         self.rect = self.image.get_rect()
         self.rect.center = position
-        self.firing = False
-        self.energy = 100
-        self.vx, self.vy = (0,0)
+        self.firing = False # Are we firing?
+        self.energy = 100 # Energy
+        self.vx, self.vy = (0,0) # X and Y velocities
         self.tp = 10 # Thruster power
-        self.maxvel = 20
-        self.weapons = []
+        self.maxvel = 20 # Maximum velocity
+        self.weapons = [] # List of weapons
+        self.score = 0 # Score
     def move(self,direction):
         logging.debug("MOVE: Direction is %s"%direction)
         if direction in (constants.RIGHT,constants.LEFT):
@@ -501,7 +503,25 @@ class EnergyBar(pygame.sprite.Sprite):
         self.width = int((self.ship.energy/100.0) * self.max_width)
         pygame.draw.rect(self.image, (0,0,0), (0,0,self.max_width,10,),0)
         pygame.draw.rect(self.image, (150,150,150), (0,0,self.width,10,),0)
-        
+
+
+class ScoreBar(pygame.sprite.Sprite):
+    def __init__(self,ship):
+        pygame.sprite.Sprite.__init__(self, self.containers)
+        self.font = pygame.font.Font('%s/jGara2.ttf'%constants.DATA_DIR,20)
+        self.image = pygame.Surface((200,25)).convert_alpha()
+        self.image.fill((100,100,100,0))
+        self.rect = self.image.get_rect()
+        self.rect.topleft = (550,740)
+        self.ship = ship
+        score = self.font.render("score  %010d"%self.ship.score,True,(20,20,20))
+        self.image.fill((100,100,100,0))
+        self.image.blit(score,(0,0))
+    def update(self):
+        score = self.font.render("score  %010d"%self.ship.score,True,(20,20,20))
+        self.image.fill((100,100,100,0))
+        self.image.blit(score,(0,0))
+                        
 class StatusPanel(pygame.sprite.Sprite):
     def __init__(self,ship):
         pygame.sprite.Sprite.__init__(self, self.containers)
@@ -510,5 +530,9 @@ class StatusPanel(pygame.sprite.Sprite):
         self.rect.center = (512,752,)
         EnergyBar.containers = self.containers
         self.energy_bar = EnergyBar(ship)
+        ScoreBar.containers = self.containers
+        self.score_bar = ScoreBar(ship)
+
+            
     
     

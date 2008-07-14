@@ -133,9 +133,9 @@ def startShooter(disturbance):
 #             l1 = sprites.Laser(constants.RIGHT,[all,jgroup],[weapons,all,jgroup])
 #             ship.attach(l1)
 #             t = 0
-    deadtimer = 100
+    deadtimer = 50
     while 1:
-        clock.tick(30)
+        clock.tick(20)
         for event in pygame.event.get():
             if event.type == QUIT or (event.type == KEYDOWN and event.key == K_ESCAPE):
                 return
@@ -186,7 +186,7 @@ def initLogger():
                         
 def initialiseGame():
     global screen,empty,clock
-    screen = pygame.display.set_mode(constants.SCREENRECT.size,DOUBLEBUF)
+    screen = pygame.display.set_mode(constants.SCREENRECT.size,DOUBLEBUF|FULLSCREEN)
     empty = pygame.Surface(constants.SCREENRECT.size).convert()
     #     empty = pygame.image.load("%s/whorl.png"%constants.IMG_DIR).convert()
     clock = pygame.time.Clock()
@@ -206,7 +206,7 @@ def main():
     initLogger()
     initialiseGame()
     disturbance = createDisturbances('%s/crackles'%constants.IMG_DIR,30)
-#     displayCredits(disturbance)
+    #displayCredits(disturbance)
     if pygame.mixer.get_init():
         #         pygame.mixer.music.load("%s/phoenix.ogg"%constants.AUDIO_DIR)
         pygame.mixer.music.load("%s/megablast.ogg"%constants.AUDIO_DIR)
