@@ -495,15 +495,25 @@ class EnergyBar(pygame.sprite.Sprite):
         self.image = pygame.Surface((500,10)).convert_alpha()
         self.ship = ship
         self.width = int((self.ship.energy/100) * self.max_width) 
-        pygame.draw.rect(self.image, (0,0,0), (0,0,self.width,10,),0)
-        pygame.draw.rect(self.image, (150,150,150), (0,0,self.width,10,),0)
+        pygame.draw.rect(self.image, (0,0,0), (1,1,self.width,8,),0)
+        pygame.draw.rect(self.image, (150,150,150), (1,1,self.width,8,),0)
         self.rect = self.image.get_rect()
         self.rect.topleft = (12,748)
+        self.last_energy = 0
+        self.glowcounter = 150
     def update(self):
         self.width = int((self.ship.energy/100.0) * self.max_width)
-        pygame.draw.rect(self.image, (0,0,0), (0,0,self.max_width,10,),0)
-        pygame.draw.rect(self.image, (150,150,150), (0,0,self.width,10,),0)
-
+        self.image.fill((0,0,0,0))
+        #         pygame.draw.rect(self.image, (0,0,0,0), (0,0,self.max_width,10,),0)
+        pygame.draw.rect(self.image, (150,150,150), (1,1,self.width,8,),0)
+        if self.ship.energy != self.last_energy:
+            self.glowcounter = 0
+        if self.glowcounter != 150:
+            self.glowcounter += 10
+            pygame.draw.rect(self.image, (self.glowcounter,self.glowcounter,self.glowcounter), (1,1,self.width,8,),0)
+        else:
+            pygame.draw.rect(self.image, (150,150,150), (1,1,self.width,8,),0)
+        self.last_energy = self.ship.energy
 
 class ScoreBar(pygame.sprite.Sprite):
     def __init__(self,ship):
