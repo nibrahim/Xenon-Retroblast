@@ -5,7 +5,7 @@ import math
 import cmath
 import pygame
 import random
-mport inspect
+import inspect
 import itertools
 PI,E = cmath.pi,cmath.e
 from pygame.locals import *
