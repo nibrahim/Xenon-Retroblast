@@ -16,6 +16,7 @@ PI,E = cmath.pi,cmath.e
 
 SHIP = (500,500)
 
+
 class Spot(pygame.sprite.Sprite):
     def __init__(self,data_file):
         super(Spot,self).__init__(self.containers)
@@ -55,8 +56,6 @@ class Spot(pygame.sprite.Sprite):
         lvel,avel,ntime = self.velocity
         self.time += 1
         if ntime != None and self.time > ntime:
-            print self.mag
-            print "Switching!!!"
             self.velocity = self.velocities.next()
             self.time = 0
         else:
@@ -64,7 +63,6 @@ class Spot(pygame.sprite.Sprite):
             self.angle += avel
             self.angle %=360
             lx,ly = self.rect.center
-            print "Angle is %s"%self.angle
             x = lx+math.ceil(self.mag * round(math.cos(math.radians(self.angle)),2))
             y = ly-math.ceil(self.mag * round(math.sin(math.radians(self.angle)),2))
             dvector = complex(x,y)
@@ -76,7 +74,6 @@ class Spot(pygame.sprite.Sprite):
             # pygame.draw.circle(screen,(0,255,0),(x,y),self.homing_radius,1)
             if self.homing and self.homing_radius >= abs(homing_vector): #Adjust position based on homing vector
                 self.homing_radius+=1
-                print "@@ ",self.homing_radius," @@ ",abs(homing_vector)
                 try:
                     homing_vector = self.homing * (homing_vector / abs(homing_vector))
                 except ZeroDivisionError:
@@ -86,8 +83,6 @@ class Spot(pygame.sprite.Sprite):
             else:
                 if self.homing_radius > 50:
                     self.homing_radius -= 1
-            print (lx,ly),"--",(x,y)
-
             pygame.draw.aaline(screen,(0,0,0),(lx,ly),(x,y))
             self.rect.center = (x,y)
         
