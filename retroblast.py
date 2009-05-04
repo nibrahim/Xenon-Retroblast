@@ -166,7 +166,7 @@ def startShooter(disturbance):
 #         pygame.draw.rect(screen,(0,255,255),pygame.Rect(472, 350, 114, 69),2)#bounding_rect,2)
 #         pygame.draw.rect(screen,(128,255,128),pygame.Rect(472, 350, 124, 69),2)#bounding_rect,2) (+ 472 124)596
         # Create new enemies if anyone is destroyed
-        if len(enemies.sprites()) < 10:
+        if len(enemies.sprites()) < 3:
             sprites.Romulan(ship,enemies).add(all,jgroup,enemies)
         # Check collisions
         pygame.sprite.groupcollide(enemies, weapons, True, False)
@@ -206,7 +206,7 @@ def main():
     initLogger()
     initialiseGame()
     disturbance = createDisturbances('%s/crackles'%constants.IMG_DIR,30)
-    #displayCredits(disturbance)
+    # displayCredits(disturbance)
     if pygame.mixer.get_init():
         #         pygame.mixer.music.load("%s/phoenix.ogg"%constants.AUDIO_DIR)
         pygame.mixer.music.load("%s/megablast.ogg"%constants.AUDIO_DIR)
