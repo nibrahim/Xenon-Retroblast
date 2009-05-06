@@ -2,8 +2,9 @@ import random
 import pygame
 import logging
 from pygame.locals import *
-import constants
 
+import constants
+import propulsion
     
 
 class Particle(pygame.sprite.Sprite):
@@ -80,25 +81,15 @@ class Romulan(pygame.sprite.Sprite):
         self.alive = True
         self.direction_counter = 0
         self.group = egroup
+        ship_pos = lambda : self.ship.rect.center
+        self.engine = iter(propulsion.Engine("%s/bar.path"%constants.DATA_DIR,ship_pos))
+
     def update(self):
-        if self.direction_counter == 1:
-            sx,sy = self.ship.rect.center
-            x,y = self.rect.center
-            if x<sx:
-                self.vx = abs(self.vx)
-            else:
-                self.vx = -1*abs(self.vx)
-            if y<sy:
-                self.vy = abs(self.vy)
-            else:
-                self.vy = -1*abs(self.vy)
-            self.direction_counter = 0
-        self.direction_counter += 1
-        x,y = self.rect.center
-        x,y = x+self.vx, y+self.vy
+        x,y = self.engine.next()
         if x>1024 or y>752:
             pygame.sprite.Sprite.kill(self)
         self.rect.center = (x,y)
+
     def kill(self):
         Explosion(self.rect.center,2,2)
         self.ship.score += 5
