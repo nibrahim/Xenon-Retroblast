@@ -7,7 +7,9 @@ import cmath
 import random
 import pickle
 import inspect
+import logging
 import itertools
+
 
 PI,E = cmath.pi,cmath.e
 
@@ -15,8 +17,9 @@ PI,E = cmath.pi,cmath.e
 class Engine(object):
     def __init__(self,data_file,cursor_pos = False):
         self.time = 0
-        self._load_data(data_file)
         self.cursor_pos = cursor_pos
+        self._load_data(data_file)
+
 
     def _load_data(self,f):
         """ Loads up the path information which should be of the format
@@ -60,21 +63,30 @@ class Engine(object):
                 dvector = complex(x,y)
                 # Homing calculations
                 if self.cursor_pos:
+                    logging.debug("Inside homing calculator")
                     cvector = complex(*self.cursor_pos())
+                    logging.debug(" +- Cursor vector is %s"%cvector)
+                    logging.debug(" +- Sprite position vector is %s"%dvector)
                     homing_vector = cvector - dvector
-                # Uncomment following two lines to draw homing region (useful for debugging)
-                # pygame.draw.circle(screen,(255,255,255),(lx,ly),self.homing_radius,1)
-                # pygame.draw.circle(screen,(0,255,0),(x,y),self.homing_radius,1)
-                if self.homing and self.homing_radius >= abs(homing_vector): #Adjust position based on homing vector
-                    self.homing_radius+=1
-                    try:
-                        homing_vector = self.homing * (homing_vector / abs(homing_vector))
-                    except ZeroDivisionError:
-                        homing_vector = 0
-                    dvector += homing_vector
-                    x,y = dvector.real,dvector.imag
-                else:
-                    if self.homing_radius > 50:
-                        self.homing_radius -= 1
+                    # Uncomment following two lines to draw homing region (useful for debugging)
+                    # pygame.draw.circle(screen,(255,255,255),(lx,ly),self.homing_radius,1)
+                    # pygame.draw.circle(screen,(0,255,0),(x,y),self.homing_radius,1)
+                    logging.debug(" +- Homing velocity is %s"%self.homing)
+                    logging.debug(" +- Homing vector mag is %s"%abs(homing_vector))
+                    logging.debug(" +- Engine homing radius is %s"%self.homing_radius)
+                    if self.homing and self.homing_radius >= abs(homing_vector): #Adjust position based on homing vector
+                        self.homing_radius+=1
+                        try:
+                            homing_vector = self.homing * (homing_vector / abs(homing_vector))
+                            logging.debug(" Adjusting")
+                        except ZeroDivisionError:
+                            logging.debug(" ZeroDiv")
+                            homing_vector = 0
+                        dvector += homing_vector
+                        x,y = dvector.real,dvector.imag
+                    else:
+                        if self.homing_radius > 50:
+                            self.homing_radius -= 1
+                self.cpos = (x,y)
                 yield (x,y)
 
