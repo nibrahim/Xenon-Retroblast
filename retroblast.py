@@ -166,7 +166,7 @@ def startShooter(disturbance):
 #         pygame.draw.rect(screen,(0,255,255),pygame.Rect(472, 350, 114, 69),2)#bounding_rect,2)
 #         pygame.draw.rect(screen,(128,255,128),pygame.Rect(472, 350, 124, 69),2)#bounding_rect,2) (+ 472 124)596
         # Create new enemies if anyone is destroyed
-        if len(enemies.sprites()) < 1:
+        if len(enemies.sprites()) < 5:
             sprites.Romulan(ship,enemies).add(all,jgroup,enemies)
         # Check collisions
         pygame.sprite.groupcollide(enemies, weapons, True, False)
