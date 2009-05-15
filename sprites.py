@@ -68,9 +68,9 @@ class Explosion(pygame.sprite.Sprite):
             pygame.sprite.Sprite.kill(self)
 
 class Romulan(pygame.sprite.Sprite):
-    def __init__(self,ship,egroup):
+    def __init__(self,ship,egroup,path="%s/bar.path"%constants.DATA_DIR):
         pygame.sprite.Sprite.__init__(self)
-        self.image = pygame.image.load("%s/enemy2.png"%constants.IMG_DIR).convert_alpha()
+        self.image = pygame.image.load("%s/enemy1.png"%constants.IMG_DIR).convert_alpha()
         self.image.set_colorkey(constants.BLACK)
         self.rect = self.image.get_rect()
         x,y = random.randrange(1024),0
