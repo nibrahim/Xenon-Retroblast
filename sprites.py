@@ -264,7 +264,17 @@ class StarSprite(pygame.sprite.Sprite):
 # ---------------------- Weapons -----------------------
 
 
-class Laser(pygame.sprite.Sprite):
+class Weapon(pygame.sprite.Sprite):
+    def __init__(self,weapon_containers):
+        pygame.sprite.Sprite.__init__(self, *weapon_containers)
+        
+    def update(self):
+        raise NotImplemented()
+
+    
+    
+
+class Laser(Weapon):
     name = "Laser"
     class LaserFire(pygame.sprite.Sprite):
         def _laserimage(self,pos):
@@ -284,7 +294,7 @@ class Laser(pygame.sprite.Sprite):
             #             pygame.draw.rect(self.image,(c,c,0),self.rect,0)
             self.image.fill((c,c,c))
     def __init__(self,position,weapon_containers,fire_containers):
-        pygame.sprite.Sprite.__init__(self, *weapon_containers)
+        Weapon.__init__(self, weapon_containers)
         self.LaserFire.containers = fire_containers
         if pygame.mixer.get_init():
             self.sound = pygame.mixer.Sound("%s/laser1.wav"%constants.AUDIO_DIR)
