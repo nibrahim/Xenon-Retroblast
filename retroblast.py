@@ -170,6 +170,7 @@ def startShooter(disturbance):
             sprites.Romulan(ship,enemies).add(all,jgroup,enemies)
         # Check collisions
         pygame.sprite.groupcollide(enemies, weapons, True, False)
+        pygame.sprite.spritecollide(ship, weapons, False)
         if not ship.groups():
             deadtimer -= 1
             if not deadtimer:
@@ -180,7 +181,7 @@ def startShooter(disturbance):
         pygame.display.flip()
 
 def initLogger():
-    logging.basicConfig(level = logging.DEBUG,
+    logging.basicConfig(level = logging.WARNING,
                         format = '%(levelname)s | %(module)s:%(lineno)d | %(message)s',
                         stream = sys.stderr
                         # filename = "foo.log"
@@ -188,7 +189,7 @@ def initLogger():
                         
 def initialiseGame():
     global screen,empty,clock
-    screen = pygame.display.set_mode(constants.SCREENRECT.size,DOUBLEBUF|FULLSCREEN)
+    screen = pygame.display.set_mode(constants.SCREENRECT.size,DOUBLEBUF)#)|FULLSCREEN)
     empty = pygame.Surface(constants.SCREENRECT.size).convert()
     #     empty = pygame.image.load("%s/whorl.png"%constants.IMG_DIR).convert()
     clock = pygame.time.Clock()
