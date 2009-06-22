@@ -86,7 +86,7 @@ def displayCredits(disturbance):
         pygame.mixer.music.play(-1)
     background = pygame.image.load('%s/dialog-card.png'%constants.IMG_DIR).convert_alpha()
     gar = pygame.font.Font('%s/jGara2.ttf'%constants.DATA_DIR,75)
-    displayCard(["Foulan Mihrabi","Retrogaming studios","Present"],gar,background,disturbance)
+    # displayCard(["Foulan Mihrabi","Retrogaming studios","Present"],gar,background,disturbance)
     if pygame.mixer.get_init():
         pygame.mixer.music.fadeout(10000)
     displayCard(["Xenon Retroblast"],gar,background,disturbance)
@@ -114,11 +114,11 @@ def startShooter(disturbance):
     spanel = sprites.StatusPanel(ship)
     multiplier = 1
     sg = sprites.SteamGun(constants.TOP,[all,jgroup],[weapons,all,jgroup])
-#     l1 = sprites.MineGun(constants.RIGHT,[all,jgroup],[weapons,all,jgroup])
-#     l2 = sprites.Laser(constants.LEFT,[all,jgroup],[weapons,all,jgroup])
+    l1 = sprites.MineGun(constants.RIGHT,[all,jgroup],[weapons,all,jgroup])
+    l2 = sprites.Laser(constants.LEFT,[all,jgroup],[weapons,all,jgroup])
     ship.attach(sg)
-#     ship.attach(l1)
-#     ship.attach(l2)
+    ship.attach(l1)
+    ship.attach(l2)
 #     t=0
 #     for i in range(5):
 #         if t==0:
@@ -209,7 +209,7 @@ def main():
     initLogger()
     initialiseGame()
     disturbance = createDisturbances('%s/crackles'%constants.IMG_DIR,30)
-    # displayCredits(disturbance)
+    displayCredits(disturbance)
     if pygame.mixer.get_init():
         #         pygame.mixer.music.load("%s/phoenix.ogg"%constants.AUDIO_DIR)
         pygame.mixer.music.load("%s/megablast.ogg"%constants.AUDIO_DIR)
