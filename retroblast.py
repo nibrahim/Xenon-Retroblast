@@ -174,7 +174,7 @@ def startShooter(disturbance):
         if not ship.groups():
             deadtimer -= 1
             if not deadtimer:
-                sys.exit(0)
+                return
         else:
             if pygame.sprite.spritecollide(ship,enemies,True):
                 ship.decrement()
@@ -219,6 +219,6 @@ def main():
     startShooter(disturbance)
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())
 
 
