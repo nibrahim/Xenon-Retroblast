@@ -343,8 +343,8 @@ class Laser(Weapon):
                 x,y = random.randrange(-5,5),random.randrange(-5,5)
                 Particle((self.rect.center[0]+x,self.rect.center[1]+y),
                          random.randrange(-2, 2), random.randrange(-1,2),0,0,random.randrange(3),
-                         [((100, 100, 100), (c, c, c), 6),
-                          ((c, c, c), (50, 50, 50), 12)
+                         [((100, 100, 100), (c, c, c), 12),
+                          ((c, c, c), (50, 50, 50), 24)
                           ])
             if self.image == self.hot:
                 self.image = self.cold
@@ -356,7 +356,7 @@ class Laser(Weapon):
             self.image = self.cold
         if not self.fire and self.temp > 0:
             # Cool down to minimum if not firing
-            self.temp -= 3
+            self.temp -= 1
 
 class SteamGun(pygame.sprite.Sprite):
     name = "Steam gun"
