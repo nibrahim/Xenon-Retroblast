@@ -2,8 +2,9 @@ import random
 import pygame
 import logging
 from pygame.locals import *
-import constants
 
+import constants
+import propulsion
     
 
 class Particle(pygame.sprite.Sprite):
@@ -67,9 +68,9 @@ class Explosion(pygame.sprite.Sprite):
             pygame.sprite.Sprite.kill(self)
 
 class Romulan(pygame.sprite.Sprite):
-    def __init__(self,ship,egroup):
+    def __init__(self,ship,egroup,path="%s/bar.path"%constants.DATA_DIR):
         pygame.sprite.Sprite.__init__(self)
-        self.image = pygame.image.load("%s/enemy2.png"%constants.IMG_DIR).convert_alpha()
+        self.image = pygame.image.load("%s/enemy1.png"%constants.IMG_DIR).convert_alpha()
         self.image.set_colorkey(constants.BLACK)
         self.rect = self.image.get_rect()
         x,y = random.randrange(1024),0
@@ -80,25 +81,15 @@ class Romulan(pygame.sprite.Sprite):
         self.alive = True
         self.direction_counter = 0
         self.group = egroup
+        ship_pos = lambda : self.ship.rect.center
+        self.engine = iter(propulsion.Engine("%s/bar.path"%constants.DATA_DIR,ship_pos))
+
     def update(self):
-        if self.direction_counter == 1:
-            sx,sy = self.ship.rect.center
-            x,y = self.rect.center
-            if x<sx:
-                self.vx = abs(self.vx)
-            else:
-                self.vx = -1*abs(self.vx)
-            if y<sy:
-                self.vy = abs(self.vy)
-            else:
-                self.vy = -1*abs(self.vy)
-            self.direction_counter = 0
-        self.direction_counter += 1
-        x,y = self.rect.center
-        x,y = x+self.vx, y+self.vy
+        x,y = self.engine.next()
         if x>1024 or y>752:
             pygame.sprite.Sprite.kill(self)
         self.rect.center = (x,y)
+
     def kill(self):
         Explosion(self.rect.center,2,2)
         self.ship.score += 5
@@ -273,7 +264,17 @@ class StarSprite(pygame.sprite.Sprite):
 # ---------------------- Weapons -----------------------
 
 
-class Laser(pygame.sprite.Sprite):
+class Weapon(pygame.sprite.Sprite):
+    def __init__(self,weapon_containers):
+        pygame.sprite.Sprite.__init__(self, *weapon_containers)
+        
+    def update(self):
+        raise NotImplemented()
+
+    
+    
+
+class Laser(Weapon):
     name = "Laser"
     class LaserFire(pygame.sprite.Sprite):
         def _laserimage(self,pos):
@@ -293,7 +294,7 @@ class Laser(pygame.sprite.Sprite):
             #             pygame.draw.rect(self.image,(c,c,0),self.rect,0)
             self.image.fill((c,c,c))
     def __init__(self,position,weapon_containers,fire_containers):
-        pygame.sprite.Sprite.__init__(self, *weapon_containers)
+        Weapon.__init__(self, weapon_containers)
         self.LaserFire.containers = fire_containers
         if pygame.mixer.get_init():
             self.sound = pygame.mixer.Sound("%s/laser1.wav"%constants.AUDIO_DIR)

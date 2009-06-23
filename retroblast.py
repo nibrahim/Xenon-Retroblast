@@ -86,7 +86,7 @@ def displayCredits(disturbance):
         pygame.mixer.music.play(-1)
     background = pygame.image.load('%s/dialog-card.png'%constants.IMG_DIR).convert_alpha()
     gar = pygame.font.Font('%s/jGara2.ttf'%constants.DATA_DIR,75)
-    displayCard(["Foulan Mihrabi","Retrogaming studios","Present"],gar,background,disturbance)
+    # displayCard(["Foulan Mihrabi","Retrogaming studios","Present"],gar,background,disturbance)
     if pygame.mixer.get_init():
         pygame.mixer.music.fadeout(10000)
     displayCard(["Xenon Retroblast"],gar,background,disturbance)
@@ -114,11 +114,11 @@ def startShooter(disturbance):
     spanel = sprites.StatusPanel(ship)
     multiplier = 1
     sg = sprites.SteamGun(constants.TOP,[all,jgroup],[weapons,all,jgroup])
-#     l1 = sprites.MineGun(constants.RIGHT,[all,jgroup],[weapons,all,jgroup])
-#     l2 = sprites.Laser(constants.LEFT,[all,jgroup],[weapons,all,jgroup])
+    l1 = sprites.MineGun(constants.RIGHT,[all,jgroup],[weapons,all,jgroup])
+    l2 = sprites.Laser(constants.LEFT,[all,jgroup],[weapons,all,jgroup])
     ship.attach(sg)
-#     ship.attach(l1)
-#     ship.attach(l2)
+    ship.attach(l1)
+    ship.attach(l2)
 #     t=0
 #     for i in range(5):
 #         if t==0:
@@ -166,10 +166,11 @@ def startShooter(disturbance):
 #         pygame.draw.rect(screen,(0,255,255),pygame.Rect(472, 350, 114, 69),2)#bounding_rect,2)
 #         pygame.draw.rect(screen,(128,255,128),pygame.Rect(472, 350, 124, 69),2)#bounding_rect,2) (+ 472 124)596
         # Create new enemies if anyone is destroyed
-        if len(enemies.sprites()) < 3:
+        if len(enemies.sprites()) < 5:
             sprites.Romulan(ship,enemies).add(all,jgroup,enemies)
         # Check collisions
         pygame.sprite.groupcollide(enemies, weapons, True, False)
+        pygame.sprite.spritecollide(ship, weapons, False)
         if not ship.groups():
             deadtimer -= 1
             if not deadtimer:
@@ -180,13 +181,15 @@ def startShooter(disturbance):
         pygame.display.flip()
 
 def initLogger():
-    logging.basicConfig(level = logging.DEBUG,
-                        format = '%(levelname)s : %(message)s',
-                        stream = sys.stderr)
+    logging.basicConfig(level = logging.WARNING,
+                        format = '%(levelname)s | %(module)s:%(lineno)d | %(message)s',
+                        stream = sys.stderr
+                        # filename = "foo.log"
+                        )
                         
 def initialiseGame():
     global screen,empty,clock
-    screen = pygame.display.set_mode(constants.SCREENRECT.size,DOUBLEBUF|FULLSCREEN)
+    screen = pygame.display.set_mode(constants.SCREENRECT.size,DOUBLEBUF)#)|FULLSCREEN)
     empty = pygame.Surface(constants.SCREENRECT.size).convert()
     #     empty = pygame.image.load("%s/whorl.png"%constants.IMG_DIR).convert()
     clock = pygame.time.Clock()
@@ -206,7 +209,7 @@ def main():
     initLogger()
     initialiseGame()
     disturbance = createDisturbances('%s/crackles'%constants.IMG_DIR,30)
-    # displayCredits(disturbance)
+    displayCredits(disturbance)
     if pygame.mixer.get_init():
         #         pygame.mixer.music.load("%s/phoenix.ogg"%constants.AUDIO_DIR)
         pygame.mixer.music.load("%s/megablast.ogg"%constants.AUDIO_DIR)
