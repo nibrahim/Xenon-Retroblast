@@ -93,13 +93,6 @@ class Romulan(pygame.sprite.Sprite):
     def kill(self):
         Explosion(self.rect.center,2,2)
         self.ship.score += 5
-#         for i in range(20):
-#             c = random.randrange(0, 128)
-#             Particle(self.rect.center, random.randrange(-3, 3), random.randrange(-3, 0), random.randrange(-2,2), random.randrange(-2,2), random.randrange(4),
-#                      [((c, 0, 0), (c, 0, 0), 3),
-#                       ((128, 128, 0), (0, 0, 0), 7)
-#                       ])
-
         if self.sound:
             self.sound.play(0)
         pygame.sprite.Sprite.kill(self)
@@ -147,6 +140,7 @@ class ShipSprite(pygame.sprite.Sprite):
         self.maxvel = 20 # Maximum velocity
         self.weapons = [] # List of weapons
         self.score = 0 # Score
+
     def move(self,direction):
         logging.debug("MOVE: Direction is %s"%direction)
         if direction in (constants.RIGHT,constants.LEFT):
@@ -156,6 +150,7 @@ class ShipSprite(pygame.sprite.Sprite):
             self.vy = {constants.TOP   : -self.tp,
                        constants.BOTTOM:  self.tp}[direction]
         logging.debug("MOVE: New velocities are %d,%d"%(self.vx,self.vy))
+
     def stop(self,direction):
         logging.debug("MOVE: Direction is %s"%direction)
         if direction in (constants.RIGHT,constants.LEFT):
@@ -163,6 +158,7 @@ class ShipSprite(pygame.sprite.Sprite):
         if direction in (constants.TOP,constants.BOTTOM):
             self.vy = 0
         logging.debug("MOVE: New velocities are %d,%d"%(self.vx,self.vy))
+
     def update(self):
         cx,cy = self.rect.center
         cx+=self.vx
@@ -189,17 +185,21 @@ class ShipSprite(pygame.sprite.Sprite):
             self.vy = self.maxvel
         if self.vy <= -self.maxvel:
             self.vy = -self.maxvel
+
     def fire(self):
         logging.debug("WEAPON : Weapons activated")
         self.firing = True
+
     def unfire(self):
         logging.debug("WEAPON : Weapons deactivated")
         self.firing = False
+
     def decrement(self):
         self.energy -= 10
         logging.debug("SHIP : Energy %d"%self.energy)
         if self.energy <= 0:
             self.kill()
+
     def attach(self,weapon):
         logging.debug("WEAPON : Attaching %s"%weapon.name)
         weapon.ship = self
@@ -213,7 +213,6 @@ class ShipSprite(pygame.sprite.Sprite):
         logging.debug("ATTACH : Bounding rectange (after union) is %s centered at %s"%(str(bounding_rect),str(bounding_rect.center)))
         weapon.rect.center = bounding_rect.center
         logging.debug("ATTACH : Weapon rect is %s centered at %s"%(str(weapon.rect),str(weapon.rect.center)))
-#         pygame.draw.rect(self.image,(255,0,255),self.image.get_rect(),2)#bounding_rect,2)
         if weapon.position == constants.TOP:
             weapon.rect.bottom = bounding_rect.top
         elif weapon.position == constants.BOTTOM:
@@ -224,7 +223,7 @@ class ShipSprite(pygame.sprite.Sprite):
             weapon.rect.left = bounding_rect.right + 10
         logging.debug("ATTACH : Weapon attached at %s with center %s"%(str(weapon.rect),str(weapon.rect.center)))
         if not weapon.coupled:
-            weapon.coupled = True
+            weapon.couple()
             self.weapons.append(weapon)
         weapon.offset = (weapon.rect.center[0] - self.rect.center[0] ,
                          weapon.rect.center[1] - self.rect.center[1] )
@@ -269,13 +268,26 @@ class Weapon(pygame.sprite.Sprite):
     def __init__(self,weapon_containers,engine = False):
         super(Weapon,self).__init__(weapon_containers)
         if not engine:
-            self.engine = iter(propulsion.Engine("%s/foo.path"%constants.DATA_DIR))
+            self.engine = iter(propulsion.Engine("%s/bar.path"%constants.DATA_DIR))
+        else:
+            self.engine = iter(engine)
+        self.coupled_update = self.update # Use the actual derived methods here
+        self.decouple()
+        
+    def decoupled_update(self):
+        x,y = self.engine.next()
+        if x>1024 or y>752:
+            self.kill()
+        self.rect.center = (x,y)
+
+    def couple(self):
+        self.update = self.coupled_update
+        self.coupled = True
+
+    def decouple(self):
+        self.update = self.decoupled_update
         self.coupled = False
-
-    def update(self):
-        raise NotImplemented()
-    
-
+        
 class Laser(Weapon):
     name = "Laser"
     class LaserFire(pygame.sprite.Sprite):
@@ -284,7 +296,7 @@ class Laser(Weapon):
             image.fill((128,128,128))
             return image
         def __init__(self,canon):
-            pygame.sprite.Sprite.__init__(self, self.containers)
+            super(Laser.LaserFire,self).__init__(self.containers)
             self.image = self._laserimage(canon.rect.midtop)
             self.rect = self.image.get_rect()
             self.canon = canon
@@ -294,8 +306,9 @@ class Laser(Weapon):
             c = random.randrange(128,255)
             t = Rect(self.rect[0]+1,self.rect[1],self.rect[2]-1,self.rect[3])
             self.image.fill((c,c,c))
-    def __init__(self,position,weapon_containers,fire_containers):
-        Weapon.__init__(self, weapon_containers)
+
+    def __init__(self,position,weapon_containers,fire_containers,engine = False):
+        super(Laser,self).__init__(weapon_containers,engine = engine)
         self.LaserFire.containers = fire_containers
         if pygame.mixer.get_init():
             self.sound = pygame.mixer.Sound("%s/laser1.wav"%constants.AUDIO_DIR)
@@ -311,6 +324,7 @@ class Laser(Weapon):
         self.temp = 0
         self.overheat = False
         self.maxtemp = random.randrange(100,200)
+
     def update(self):
         if self.ship.firing and not self.fire and not self.overheat:
             # Start firing if the ship is firing and we're not and we're cool enough
@@ -337,7 +351,7 @@ class Laser(Weapon):
                     self.sound.stop()
                 self.fire.kill()
                 self.fire = False
-            for i in range(10):
+            for i in range(10): # Blow off steam. Particle effects. :)
                 c = random.randrange(0, 128)
                 x,y = random.randrange(-5,5),random.randrange(-5,5)
                 Particle((self.rect.center[0]+x,self.rect.center[1]+y),
@@ -378,6 +392,7 @@ class SteamGun(Weapon):
                 raise
             self.rect = self.image.get_rect()
             self.rect.midbottom = self.gun.rect.midtop
+
     def _getShotImages(self,spritefile,colorkey = constants.BLACK):
         "Extract an array of images from the given sprite sheet."
         sheet = pygame.image.load(spritefile).convert_alpha()
@@ -390,8 +405,9 @@ class SteamGun(Weapon):
                 image.set_colorkey(colorkey)
             images.append(image)
         return images
-    def __init__(self,position,weapon_containers,fire_containers):
-        super(SteamGun,self).__init__(weapon_containers)
+
+    def __init__(self,position,weapon_containers,fire_containers,engine = False):
+        super(SteamGun,self).__init__(weapon_containers,engine = engine)
         self.SteamJet.containers = fire_containers
         self.fc = fire_containers
         self.fire_images = self._getShotImages("%s/steamsprites.png"%constants.IMG_DIR)
@@ -403,19 +419,11 @@ class SteamGun(Weapon):
             self.sound.set_volume(0.5)
         self.position = position
         self.firing = False
+
     def update(self):
         if self.ship.firing and not self.firing:
             # Activate weapon if we're not shooting but the ship is
-#             for i in range(50):
-#                 c = random.randrange(0, 128)
-#                 x = random.randrange(-5,5)
-#                 t=Particle((self.rect.midtop[0]+x,self.rect.midtop[1]),
-#                            random.randrange(-4, 4), random.randrange(-30,0),0,0,random.randrange(3),
-#                            [((100, 100, 100), (c, c, c), 4),
-#                             ((c, c, c), (50, 50, 50), 2)
-#                             ])
-#                 t.add(*self.fc)
-                self.firing = self.SteamJet(self.fire_images,self)
+            self.firing = self.SteamJet(self.fire_images,self)
         if self.firing and not self.ship.firing:
             # Deactivate weapon if we're shooting and the ship stops
             self.firing.kill()
@@ -426,7 +434,7 @@ class MineGun(Weapon):
     name = "Mine gun"
     class Mine(pygame.sprite.Sprite):
         def __init__(self,images,cannon,fc):
-            pygame.sprite.Sprite.__init__(self, self.containers)
+            super(MineGun.Mine,self).__init__(*self.containers)
             self.images = images
             self.image = self.images[0]
             self.rect = self.image.get_rect()
@@ -454,6 +462,7 @@ class MineGun(Weapon):
             f = Explosion(self.rect.center,3,1)
             f.add(*self.fc)
             pygame.sprite.Sprite.kill(self)
+
     def _getMineImages(self,spritefile,colorkey = constants.BLUE):
         "Extract an array of images from the given sprite sheet."
         sheet = pygame.image.load(spritefile).convert()
@@ -468,15 +477,17 @@ class MineGun(Weapon):
                 image.set_colorkey(colorkey)
             images.append(image)
         return images            
-    def __init__(self,position,weapon_containers,fire_containers):
-        super(MineGun,self).__init__(*weapon_containers)
-        self.Mine.containers = weapon_containers
+
+    def __init__(self,position,weapon_containers,fire_containers,engine = False):
+        super(MineGun,self).__init__(weapon_containers,engine = engine)
+        self.Mine.containers = fire_containers
         self.image = pygame.image.load("%s/minegun.png"%constants.IMG_DIR).convert_alpha()
         self.mine_images = self._getMineImages("%s/minesheet.png"%constants.IMG_DIR,-1)
         self.rect = self.image.get_rect()
         self.position = position
         self.firing = False
         self.fc = fire_containers
+
     def update(self):
         if not self.firing:
             if self.ship.firing:
@@ -499,6 +510,7 @@ class EnergyBar(pygame.sprite.Sprite):
         self.rect.topleft = (12,748)
         self.last_energy = 0
         self.glowcounter = 150
+
     def update(self):
         self.width = int((self.ship.energy/100.0) * self.max_width)
         self.image.fill((0,0,0,0))

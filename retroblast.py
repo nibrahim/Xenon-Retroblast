@@ -8,7 +8,7 @@ import logging
 import dircache
 from pygame.locals import *
 
-import sprites, constants
+import sprites, constants, propulsion
 
 class Disturbance(object):
     def __init__(self,dsprites,number,surface):
@@ -103,8 +103,9 @@ def startShooter(disturbance):
     # Sprite groups
     all = pygame.sprite.OrderedUpdates() # All the sprites. This is for general frame updates
     jgroup = pygame.sprite.RenderPlain() # For jitters. All sprites that need to shake go in here.
-    enemies = pygame.sprite.RenderPlain()
-    weapons = pygame.sprite.RenderPlain()
+    enemies = pygame.sprite.RenderPlain() # For enemy ships
+    weapons = pygame.sprite.RenderPlain() # For weapons
+    weapon_fire = pygame.sprite.RenderPlain() # For weapon fire
     createStarField([jgroup,all]) # StarField background
     ship = sprites.ShipSprite("%s/ship.png"%constants.IMG_DIR,(512,384))
     ship.add(all,jgroup)
@@ -113,26 +114,12 @@ def startShooter(disturbance):
     sprites.StatusPanel.containers = all
     spanel = sprites.StatusPanel(ship)
     multiplier = 1
-    sg = sprites.SteamGun(constants.TOP,[all,jgroup],[weapons,all,jgroup])
-    l1 = sprites.MineGun(constants.RIGHT,[all,jgroup],[weapons,all,jgroup])
-    l2 = sprites.Laser(constants.LEFT,[all,jgroup],[weapons,all,jgroup])
+    sg = sprites.SteamGun(constants.TOP,[all,weapons,jgroup],[weapon_fire,all,jgroup])
+    l1 = sprites.MineGun(constants.RIGHT,[all,weapons,jgroup],[weapon_fire,all,jgroup],engine = propulsion.Engine("%s/bar.path"%constants.DATA_DIR))
+    l2 = sprites.Laser(constants.LEFT,[all,weapons,jgroup],[weapon_fire,all,jgroup])
     ship.attach(sg)
-    ship.attach(l1)
-    ship.attach(l2)
-#     t=0
-#     for i in range(5):
-#         if t==0:
-#             l1 = sprites.MineGun(constants.RIGHT,[all,jgroup],[weapons,all,jgroup])
-#             ship.attach(l1)
-#             l1 = sprites.Laser(constants.LEFT,[all,jgroup],[weapons,all,jgroup])
-#             ship.attach(l1)
-#             t = 1
-#         else:
-#             l1 = sprites.MineGun(constants.LEFT,[all,jgroup],[weapons,all,jgroup])
-#             ship.attach(l1)
-#             l1 = sprites.Laser(constants.RIGHT,[all,jgroup],[weapons,all,jgroup])
-#             ship.attach(l1)
-#             t = 0
+    # ship.attach(l1)
+    # ship.attach(l2)
     deadtimer = 50
     while 1:
         clock.tick(20)
@@ -169,8 +156,10 @@ def startShooter(disturbance):
         if len(enemies.sprites()) < 1:
             sprites.Romulan(ship,enemies).add(all,jgroup,enemies)
         # Check collisions
-        pygame.sprite.groupcollide(enemies, weapons, True, False)
-        pygame.sprite.spritecollide(ship, weapons, False)
+        pygame.sprite.groupcollide(enemies, weapon_fire, True, False)
+        for i in pygame.sprite.spritecollide(ship, weapons, False):
+            logging.debug("Attaching %s"%i)
+            ship.attach(i)
         if not ship.groups():
             deadtimer -= 1
             if not deadtimer:
@@ -181,7 +170,7 @@ def startShooter(disturbance):
         pygame.display.flip()
 
 def initLogger():
-    logging.basicConfig(level = logging.WARNING,
+    logging.basicConfig(level = logging.DEBUG,
                         format = '%(levelname)s | %(module)s:%(lineno)d | %(message)s',
                         stream = sys.stderr
                         # filename = "foo.log"

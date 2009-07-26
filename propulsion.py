@@ -63,24 +63,16 @@ class Engine(object):
                 dvector = complex(x,y)
                 # Homing calculations
                 if self.cursor_pos:
-                    logging.debug("Inside homing calculator")
                     cvector = complex(*self.cursor_pos())
-                    logging.debug(" +- Cursor vector is %s"%cvector)
-                    logging.debug(" +- Sprite position vector is %s"%dvector)
                     homing_vector = cvector - dvector
                     # Uncomment following two lines to draw homing region (useful for debugging)
                     # pygame.draw.circle(screen,(255,255,255),(lx,ly),self.homing_radius,1)
                     # pygame.draw.circle(screen,(0,255,0),(x,y),self.homing_radius,1)
-                    logging.debug(" +- Homing velocity is %s"%self.homing)
-                    logging.debug(" +- Homing vector mag is %s"%abs(homing_vector))
-                    logging.debug(" +- Engine homing radius is %s"%self.homing_radius)
                     if self.homing and self.homing_radius >= abs(homing_vector): #Adjust position based on homing vector
                         self.homing_radius+=1
                         try:
                             homing_vector = self.homing * (homing_vector / abs(homing_vector))
-                            logging.debug(" Adjusting")
                         except ZeroDivisionError:
-                            logging.debug(" ZeroDiv")
                             homing_vector = 0
                         dvector += homing_vector
                         x,y = dvector.real,dvector.imag
