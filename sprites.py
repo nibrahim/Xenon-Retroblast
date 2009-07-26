@@ -9,7 +9,7 @@ import propulsion
 
 class Particle(pygame.sprite.Sprite):
     def __init__(self, pos, vx, vy, ax, ay, size, colorstructure):
-        pygame.sprite.Sprite.__init__(self, self.containers)
+        super(Particle,self).__init__(self.containers)
         self.vx, self.vy, self.ax, self.ay = vx, vy, ax, ay
         self.images = []
         for x in colorstructure:
@@ -51,7 +51,7 @@ class Explosion(pygame.sprite.Sprite):
             images.append(pygame.transform.rotate(pygame.transform.scale(image,(scale,scale)),rotation))
         return images
     def __init__(self,pos,size,fr,colour = False):
-        pygame.sprite.Sprite.__init__(self, self.containers)
+        super(Explosion,self).__init__(self.containers)
         if colour:
             self.images = self._getExplosionImages("%s/colour-explosion.png"%constants.IMG_DIR,size*48)
         else:
@@ -68,7 +68,7 @@ class Explosion(pygame.sprite.Sprite):
             pygame.sprite.Sprite.kill(self)
 
 class Romulan(pygame.sprite.Sprite):
-    def __init__(self,ship,egroup,path="%s/bar.path"%constants.DATA_DIR):
+    def __init__(self,ship,egroup,path="%s/foo.path"%constants.DATA_DIR):
         pygame.sprite.Sprite.__init__(self)
         self.image = pygame.image.load("%s/enemy1.png"%constants.IMG_DIR).convert_alpha()
         self.image.set_colorkey(constants.BLACK)
@@ -82,7 +82,7 @@ class Romulan(pygame.sprite.Sprite):
         self.direction_counter = 0
         self.group = egroup
         ship_pos = lambda : self.ship.rect.center
-        self.engine = iter(propulsion.Engine("%s/bar.path"%constants.DATA_DIR,ship_pos))
+        self.engine = iter(propulsion.Engine("%s/foo.path"%constants.DATA_DIR,ship_pos))
 
     def update(self):
         x,y = self.engine.next()
@@ -223,7 +223,8 @@ class ShipSprite(pygame.sprite.Sprite):
         elif weapon.position == constants.RIGHT:
             weapon.rect.left = bounding_rect.right + 10
         logging.debug("ATTACH : Weapon attached at %s with center %s"%(str(weapon.rect),str(weapon.rect.center)))
-        if weapon.coupled:
+        if not weapon.coupled:
+            weapon.coupled = True
             self.weapons.append(weapon)
         weapon.offset = (weapon.rect.center[0] - self.rect.center[0] ,
                          weapon.rect.center[1] - self.rect.center[1] )
@@ -265,13 +266,14 @@ class StarSprite(pygame.sprite.Sprite):
 
 
 class Weapon(pygame.sprite.Sprite):
-    def __init__(self,weapon_containers):
-        pygame.sprite.Sprite.__init__(self, *weapon_containers)
-        
+    def __init__(self,weapon_containers,engine = False):
+        super(Weapon,self).__init__(weapon_containers)
+        if not engine:
+            self.engine = iter(propulsion.Engine("%s/foo.path"%constants.DATA_DIR))
+        self.coupled = False
+
     def update(self):
         raise NotImplemented()
-
-    
     
 
 class Laser(Weapon):
@@ -291,7 +293,6 @@ class Laser(Weapon):
             self.rect.midbottom = self.canon.rect.midtop
             c = random.randrange(128,255)
             t = Rect(self.rect[0]+1,self.rect[1],self.rect[2]-1,self.rect[3])
-            #             pygame.draw.rect(self.image,(c,c,0),self.rect,0)
             self.image.fill((c,c,c))
     def __init__(self,position,weapon_containers,fire_containers):
         Weapon.__init__(self, weapon_containers)
@@ -302,8 +303,6 @@ class Laser(Weapon):
         else:
             self.sound = False
         self.image = pygame.image.load("%s/canon1.png"%constants.IMG_DIR).convert_alpha()
-#         pygame.draw.rect(self.image,(255,0,0),self.image.get_rect(),2)
-        self.coupled = True
         self.cold = self.image
         self.hot = pygame.image.load("%s/canon1-hot.png"%constants.IMG_DIR).convert_alpha()
         self.rect = self.image.get_rect()
@@ -358,11 +357,11 @@ class Laser(Weapon):
             # Cool down to minimum if not firing
             self.temp -= 1
 
-class SteamGun(pygame.sprite.Sprite):
+class SteamGun(Weapon):
     name = "Steam gun"
     class SteamJet(pygame.sprite.Sprite):
         def __init__(self,images,gun):
-            pygame.sprite.Sprite.__init__(self, self.containers)
+            super(SteamGun.SteamJet,self).__init__(self.containers)
             self.gun = gun
             self.images = images
             self.image = self.images[0]
@@ -392,7 +391,7 @@ class SteamGun(pygame.sprite.Sprite):
             images.append(image)
         return images
     def __init__(self,position,weapon_containers,fire_containers):
-        pygame.sprite.Sprite.__init__(self, *weapon_containers)
+        super(SteamGun,self).__init__(weapon_containers)
         self.SteamJet.containers = fire_containers
         self.fc = fire_containers
         self.fire_images = self._getShotImages("%s/steamsprites.png"%constants.IMG_DIR)
@@ -403,7 +402,6 @@ class SteamGun(pygame.sprite.Sprite):
             self.sound = pygame.mixer.Sound("%s/steam1.wav"%constants.AUDIO_DIR)
             self.sound.set_volume(0.5)
         self.position = position
-        self.coupled = True
         self.firing = False
     def update(self):
         if self.ship.firing and not self.firing:
@@ -424,7 +422,7 @@ class SteamGun(pygame.sprite.Sprite):
             self.firing = False
 
 
-class MineGun(pygame.sprite.Sprite):
+class MineGun(Weapon):
     name = "Mine gun"
     class Mine(pygame.sprite.Sprite):
         def __init__(self,images,cannon,fc):
@@ -471,13 +469,12 @@ class MineGun(pygame.sprite.Sprite):
             images.append(image)
         return images            
     def __init__(self,position,weapon_containers,fire_containers):
-        pygame.sprite.Sprite.__init__(self, *weapon_containers)
+        super(MineGun,self).__init__(*weapon_containers)
         self.Mine.containers = weapon_containers
         self.image = pygame.image.load("%s/minegun.png"%constants.IMG_DIR).convert_alpha()
         self.mine_images = self._getMineImages("%s/minesheet.png"%constants.IMG_DIR,-1)
         self.rect = self.image.get_rect()
         self.position = position
-        self.coupled = True
         self.firing = False
         self.fc = fire_containers
     def update(self):
