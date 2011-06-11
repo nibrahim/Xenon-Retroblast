@@ -86,7 +86,7 @@ def displayCredits(disturbance):
         pygame.mixer.music.play(-1)
     background = pygame.image.load('%s/dialog-card.png'%constants.IMG_DIR).convert_alpha()
     gar = pygame.font.Font('%s/jGara2.ttf'%constants.DATA_DIR,75)
-    # displayCard(["Foulan Mihrabi","Retrogaming studios","Present"],gar,background,disturbance)
+    displayCard(["Foulan Mihrabi","Retrogaming studios","Presents"],gar,background,disturbance)
     if pygame.mixer.get_init():
         pygame.mixer.music.fadeout(10000)
     displayCard(["Xenon Retroblast"],gar,background,disturbance)
@@ -198,7 +198,7 @@ def main():
     initLogger()
     initialiseGame()
     disturbance = createDisturbances('%s/crackles'%constants.IMG_DIR,30)
-    # displayCredits(disturbance)
+    displayCredits(disturbance)
     if pygame.mixer.get_init():
         #         pygame.mixer.music.load("%s/phoenix.ogg"%constants.AUDIO_DIR)
         pygame.mixer.music.load("%s/megablast.ogg"%constants.AUDIO_DIR)
