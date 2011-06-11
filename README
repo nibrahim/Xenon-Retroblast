@@ -1,0 +1,11 @@
+Xenon Retroblast
+================
+
+Xenon Retroblast is a steampunk themed vertical shooter inspired by
+the classic (Xenon 2:
+Megablast)[http://en.wikipedia.org/wiki/Xenon_2_Megablast].
+
+It's designed to be extensible (custom weapons, levels, enemies etc.)
+and is themed to look like an old charlie chaplin era movie.
+
+It is written in Python and uses the PyGame SDL wrapper.
