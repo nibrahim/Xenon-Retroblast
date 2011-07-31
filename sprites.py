@@ -237,12 +237,12 @@ class ShipSprite(pygame.sprite.Sprite):
 
 
 class StarSprite(pygame.sprite.Sprite):
-    def __init__(self,position,brightness,velocity,min_velocity,acceleration):
+    def __init__(self, position, brightness, velocity, min_velocity, acceleration):
         pygame.sprite.Sprite.__init__(self)
         self.brightness = brightness
         color = (255*brightness,255*brightness,255*brightness)
-        self.image = pygame.Surface((2,2)).convert()
-        pygame.draw.circle(self.image,color,(0,0),1,0)
+        self.image = pygame.Surface((3,3)).convert()
+        pygame.draw.circle(self.image,color,(0,0),3,0)
         self.rect = self.image.get_rect()
         self.rect.center = position
         self.acceleration = acceleration
