@@ -68,7 +68,7 @@ class Explosion(pygame.sprite.Sprite):
             pygame.sprite.Sprite.kill(self)
 
 class Romulan(pygame.sprite.Sprite):
-    def __init__(self,ship,egroup,path="%s/foo.path"%constants.DATA_DIR):
+    def __init__(self, ship, egroup):
         pygame.sprite.Sprite.__init__(self)
         self.image = pygame.image.load("%s/enemy1.png"%constants.IMG_DIR).convert_alpha()
         self.image.set_colorkey(constants.BLACK)
@@ -82,7 +82,7 @@ class Romulan(pygame.sprite.Sprite):
         self.direction_counter = 0
         self.group = egroup
         ship_pos = lambda : self.ship.rect.center
-        self.engine = iter(propulsion.Engine("%s/foo.path"%constants.DATA_DIR,ship_pos))
+        self.engine = iter(propulsion.Engine("%s/foo.json"%constants.DATA_DIR,ship_pos))
 
     def update(self):
         x,y = self.engine.next()
@@ -268,7 +268,7 @@ class Weapon(pygame.sprite.Sprite):
     def __init__(self,weapon_containers,engine = False):
         super(Weapon,self).__init__(weapon_containers)
         if not engine:
-            self.engine = iter(propulsion.Engine("%s/bar.path"%constants.DATA_DIR))
+            self.engine = iter(propulsion.Engine("%s/bar.json"%constants.DATA_DIR))
         else:
             self.engine = iter(engine)
         self.coupled_update = self.update # Use the actual derived methods here

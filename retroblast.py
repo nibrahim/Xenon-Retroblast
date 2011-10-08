@@ -115,7 +115,7 @@ def startShooter(disturbance):
     spanel = sprites.StatusPanel(ship)
     multiplier = 1
     sg = sprites.SteamGun(constants.TOP,[all,weapons,jgroup],[weapon_fire,all,jgroup])
-    l1 = sprites.MineGun(constants.RIGHT,[all,weapons,jgroup],[weapon_fire,all,jgroup],engine = propulsion.Engine("%s/bar.path"%constants.DATA_DIR))
+    l1 = sprites.MineGun(constants.RIGHT,[all,weapons,jgroup],[weapon_fire,all,jgroup],engine = propulsion.Engine("%s/bar.json"%constants.DATA_DIR))
     l2 = sprites.Laser(constants.LEFT,[all,weapons,jgroup],[weapon_fire,all,jgroup])
     ship.attach(sg)
     # ship.attach(l1)
@@ -198,7 +198,7 @@ def main():
     initLogger()
     initialiseGame()
     disturbance = createDisturbances('%s/crackles'%constants.IMG_DIR,30)
-    displayCredits(disturbance)
+    # displayCredits(disturbance)
     if pygame.mixer.get_init():
         #         pygame.mixer.music.load("%s/phoenix.ogg"%constants.AUDIO_DIR)
         pygame.mixer.music.load("%s/megablast.ogg"%constants.AUDIO_DIR)

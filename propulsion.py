@@ -5,7 +5,7 @@ import sys
 import math
 import cmath
 import random
-import pickle
+import json
 import inspect
 import logging
 import itertools
@@ -35,7 +35,7 @@ class Engine(object):
         """
 
         with open(f) as ip:
-            path = pickle.load(ip)
+            path = json.load(ip)
 
         self.cpos          = path['start']
         # Acceleration assignments over time [magnitude, angle, time] (time == None means forever)

@@ -3,10 +3,10 @@ from __future__ import with_statement
 
 import sys
 import math
+import json
 import cmath
 import pygame
 import random
-import pickle
 import inspect
 import itertools
 
@@ -39,8 +39,9 @@ class Spot(pygame.sprite.Sprite):
         """
 
         with open(f) as ip:
-            path = pickle.load(ip)
+            path = json.load(ip)
 
+        print type(path)
         self.image         = pygame.image.load(path['image']).convert_alpha()
         self.rect          = self.image.get_rect()
         self.rect.center   = path['start']
@@ -51,6 +52,8 @@ class Spot(pygame.sprite.Sprite):
         self.angle         = path['initang']
         self.homing        = path['homvel']
         self.homing_radius = path['homrad']
+
+    
 
     def update(self,time):
         lvel,avel,ntime = self.velocity
@@ -70,19 +73,15 @@ class Spot(pygame.sprite.Sprite):
             cvector = complex(*pygame.mouse.get_pos())
             homing_vector = cvector - dvector
             # Uncomment following two lines to draw homing region (useful for debugging)
-            # pygame.draw.circle(screen,(255,255,255),(lx,ly),self.homing_radius,1)
-            # pygame.draw.circle(screen,(0,255,0),(x,y),self.homing_radius,1)
+            pygame.draw.circle(screen,(255,255,255),(lx,ly),self.homing_radius,1)
+            pygame.draw.circle(screen,(0,255,0),(x,y),self.homing_radius,1)
             if self.homing and self.homing_radius >= abs(homing_vector): #Adjust position based on homing vector
-                self.homing_radius+=1
                 try:
                     homing_vector = self.homing * (homing_vector / abs(homing_vector))
                 except ZeroDivisionError:
                     homing_vector = 0
                 dvector += homing_vector
                 x,y = dvector.real,dvector.imag
-            else:
-                if self.homing_radius > 50:
-                    self.homing_radius -= 1
             pygame.draw.aaline(screen,(0,0,0),(lx,ly),(x,y))
             self.rect.center = (x,y)
         
@@ -98,8 +97,12 @@ if __name__ == "__main__":
     all = pygame.sprite.RenderPlain()
     Spot.containers = all
     pygame.mouse.set_cursor(*pygame.cursors.ball) 
-    # s1=Spot("../data/foo.path")
-    s2=Spot("../data/bar.path")
+    s1=Spot("../data/bar.json")
+    s2=Spot("../data/bar.json")
+    s3=Spot("../data/bar.json")
+
+    s1.rect.center = (150, 150)
+    s3.rect.center = (300, 300)
 
     # s3=Spot((512,512),                            # Start position
     #         -10,                                    # Initial magnitude
