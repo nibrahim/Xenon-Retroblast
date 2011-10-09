@@ -7,6 +7,43 @@ import constants
 import propulsion
     
 
+class SheetSprite(pygame.sprite.Sprite):
+    """
+    A general class to render sprites off sheets.
+
+    pos : Position of the sprite
+    size : Size of each individual element in the sheet
+    nelements : No. of elements
+    sheet : The sprite sheet file
+    containers : Containers to add the sprite to.
+    """
+    
+    def __init__(self, pos, size, nelements, sheet, scale = 1, rotation = 0, colorkey = constants.BLACK):
+        super(SheetSprite, self).__init__(self.containers)
+        sheet = pygame.image.load(sheet).convert_alpha()
+        self.images = []
+        for i in range(0, size*nelements, size):
+            rect = pygame.Rect((i,0, size, size))
+            image = pygame.Surface(rect.size).convert()
+            image.blit(sheet, (0, 0), rect)
+            if colorkey is not None:
+                image.set_colorkey(colorkey)
+            self.images.append(pygame.transform.rotate(pygame.transform.scale(image,(scale,scale)),rotation))
+        self.image = self.images[0]
+        self.rect = self.image.get_rect()
+        self.rect.center = pos
+        self.iindex = 1
+
+    def update(self):
+        self.image = self.images[int(self.iindex)]
+        self.iindex += 1
+        if self.iindex >= len(self.images):
+            pygame.sprite.Sprite.kill(self)
+    
+
+    
+
+
 class Particle(pygame.sprite.Sprite):
     def __init__(self, pos, vx, vy, ax, ay, size, colorstructure):
         super(Particle,self).__init__(self.containers)
@@ -36,36 +73,14 @@ class Particle(pygame.sprite.Sprite):
         else:
             self.image = self.images.pop(0)
             
-class Explosion(pygame.sprite.Sprite):
-    def _getExplosionImages(self,spritefile,scale,size=48,colorkey = constants.BLACK):
-        "Extract an array of images from the given sprite sheet."
-        sheet = pygame.image.load(spritefile).convert_alpha()
-        images = []
-        rotation = random.randrange(0,180)
-        for i in range(0,768,size):
-            rect = pygame.Rect((i,0,size,size))
-            image = pygame.Surface(rect.size).convert()
-            image.blit(sheet, (0, 0), rect)
-            if colorkey is not None:
-                image.set_colorkey(colorkey)
-            images.append(pygame.transform.rotate(pygame.transform.scale(image,(scale,scale)),rotation))
-        return images
-    def __init__(self,pos,size,fr,colour = False):
-        super(Explosion,self).__init__(self.containers)
+class Explosion(SheetSprite):
+    def __init__(self, pos, size, colour = False):
         if colour:
-            self.images = self._getExplosionImages("%s/colour-explosion.png"%constants.IMG_DIR,size*48)
+            sheet = "%s/colour-explosion.png"%constants.IMG_DIR
         else:
-            self.images = self._getExplosionImages("%s/explosion.png"%constants.IMG_DIR,size*48)
-        self.image = self.images[0]
-        self.rect = self.image.get_rect()
-        self.rect.center = pos
-        self.iindex = 1
-        self.rate = fr
-    def update(self):
-        self.image = self.images[int(self.iindex)]
-        self.iindex += self.rate
-        if self.iindex >= len(self.images):
-            pygame.sprite.Sprite.kill(self)
+            sheet = "%s/explosion.png"%constants.IMG_DIR
+        super(Explosion,self).__init__(pos, 48, 16, sheet, scale = size * 48)
+
 
 class Romulan(pygame.sprite.Sprite):
     def __init__(self, ship, egroup):
@@ -91,7 +106,7 @@ class Romulan(pygame.sprite.Sprite):
         self.rect.center = (x,y)
 
     def kill(self):
-        Explosion(self.rect.center,2,2)
+        Explosion(self.rect.center, 2,  False)
         self.ship.score += 5
         if self.sound:
             self.sound.play(0)
@@ -233,8 +248,10 @@ class ShipSprite(pygame.sprite.Sprite):
         for i in self.weapons:
             i.kill()
         for i in range(1,15):
-            Explosion((random.randrange(x0,x0+x1),random.randrange(y0,y0+y1)),random.randrange(1,5),1,True)
-
+            # def __init__(self, pos, size, fr, colour = False):
+            Explosion((random.randrange(x0,x0+x1), random.randrange(y0,y0+y1)),
+                      2,
+                      True)
 
 class StarSprite(pygame.sprite.Sprite):
     def __init__(self, position, brightness, velocity, min_velocity, acceleration):
@@ -443,6 +460,7 @@ class MineGun(Weapon):
             self.moving = 20
             self.lifetime = random.randrange(30)
             self.fc = fc
+
         def update(self):
             x,y = self.rect.center
             if self.moving:
@@ -458,8 +476,9 @@ class MineGun(Weapon):
             except IndexError:
                 print self.index
                 raise
+
         def kill(self):
-            f = Explosion(self.rect.center,3,1)
+            f = Explosion(self.rect.center, 3, False)
             f.add(*self.fc)
             pygame.sprite.Sprite.kill(self)
 
