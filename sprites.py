@@ -99,12 +99,17 @@ class Particle(pygame.sprite.Sprite):
             self.image = self.images.pop(0)
             
 class Explosion(SheetSprite):
-    def __init__(self, pos, size, colour = False):
-        if colour:
-            sheet = "%s/colour-explosion.png"%constants.IMG_DIR
-        else:
-            sheet = "%s/explosion.png"%constants.IMG_DIR
-        super(Explosion, self).__init__(pos, 48, 16, sheet, scale = size * 48)
+    def __init__(self, pos, size, typ = 1):
+        if typ == 1:
+            sheet = "%s/explosion-main.png"%constants.IMG_DIR
+            super(Explosion, self).__init__(pos, 64, 40, sheet, scale = size * 64)
+        if typ == 2:
+            sheet = "%s/explosion1.png"%constants.IMG_DIR
+            super(Explosion, self).__init__(pos, 64, 40, sheet, scale = size * 64)
+
+class Damage(SheetSprite):
+    def __init__(self, pos):
+        super(Damage, self).__init__(pos, 24, 16, "%s/damage.png"%constants.IMG_DIR, scale = 24)
 
 
 class IonDischarge(SheetSprite):
@@ -130,6 +135,7 @@ class Romulan(pygame.sprite.Sprite):
         self.group = egroup
         ship_pos = lambda : self.ship.rect.center
         self.engine = iter(propulsion.Engine("%s/foo.json"%constants.DATA_DIR,ship_pos))
+        self.health = 100
 
     def update(self):
         x,y = self.engine.next()
@@ -138,11 +144,20 @@ class Romulan(pygame.sprite.Sprite):
         self.rect.center = (x,y)
 
     def kill(self):
-        Explosion(self.rect.center, 2,  False)
+        Explosion(self.rect.center, 2,  2)
         self.ship.score += 5
         if self.sound:
             self.sound.play(0)
-        pygame.sprite.Sprite.kill(self)
+        super(Romulan, self).kill()
+
+    def damage(self, weapon):
+        for i in range(2):
+            x0, y0 = self.rect.center
+            Damage((random.randrange(x0-10,x0+10), random.randrange(y0-10,y0+10)))
+        self.health -= weapon.power
+        if self.health <= 0:
+            self.kill()
+        
         
 class DisturbanceSprite(pygame.sprite.Sprite):
     def __init__(self,image):
@@ -176,8 +191,9 @@ class CrackSprite(pygame.sprite.Sprite):
             self.visible = True
 
 class ShipSprite(pygame.sprite.Sprite):
-    def __init__(self,image,position):
+    def __init__(self, image, position, sound):
         pygame.sprite.Sprite.__init__(self)
+        self.sound = pygame.mixer.Sound(sound)
         self.image = pygame.image.load(image).convert_alpha()
         self.image.set_colorkey(constants.BLACK)
         self.rect = self.image.get_rect()
@@ -276,16 +292,15 @@ class ShipSprite(pygame.sprite.Sprite):
             self.weapons.append(weapon)
         weapon.offset = (weapon.rect.center[0] - self.rect.center[0] ,
                          weapon.rect.center[1] - self.rect.center[1] )
+
     def kill(self):
         pygame.sprite.Sprite.kill(self)
-        x0,y0,x1,y1 = self.rect
+        x, y = self.rect.center
+        if self.sound:
+            self.sound.play(0)
         for i in self.weapons:
             i.kill()
-        for i in range(1,15):
-            # def __init__(self, pos, size, fr, colour = False):
-            Explosion((random.randrange(x0,x0+x1), random.randrange(y0,y0+y1)),
-                      2,
-                      True)
+        Explosion((x, y), 5, 1)
 
 class StarSprite(pygame.sprite.Sprite):
     def __init__(self, position, brightness, velocity, min_velocity, acceleration):
@@ -299,6 +314,7 @@ class StarSprite(pygame.sprite.Sprite):
         self.acceleration = acceleration
         self.velocity = velocity
         self.min_velocity = min_velocity
+
     def update(self):
         if self.velocity != 0:
             c = random.randrange(0,int(255*self.brightness))
@@ -344,6 +360,7 @@ class Laser(Weapon):
 
     class LaserFire(pygame.sprite.Sprite):
         power = 10
+        name = "Laser fire"
         def _laserimage(self,pos):
             image = pygame.Surface((3,768)).convert()
             image.fill((128,128,128))
@@ -428,15 +445,19 @@ class Laser(Weapon):
 
 class SteamGun(Weapon):
     name = "Steam gun"
+
     class SteamJet(pygame.sprite.Sprite):
+        power = 5
+        name = "Steam fire"
         def __init__(self,images,gun):
-            super(SteamGun.SteamJet,self).__init__(self.containers)
+            super(SteamGun.SteamJet,self).__init__()
             self.gun = gun
             self.images = images
             self.image = self.images[0]
             self.rect = self.image.get_rect()
             self.rect.midbottom = self.gun.rect.midtop
             self.index = 0
+
         def update(self):
             self.index += 1
             self.index %= len(self.images) - 1
@@ -460,13 +481,12 @@ class SteamGun(Weapon):
             images.append(image)
         return images
 
-    def __init__(self,position,weapon_containers,fire_containers,engine = False):
+    def __init__(self, position, weapon_containers, fire_containers, engine = False):
         super(SteamGun,self).__init__(weapon_containers,engine = engine)
-        self.SteamJet.containers = fire_containers
         self.fc = fire_containers
         self.fire_images = self._getShotImages("%s/steamsprites.png"%constants.IMG_DIR)
         self.image = pygame.image.load("%s/steamgun.png"%constants.IMG_DIR).convert_alpha()
-#         pygame.draw.rect(self.image,(255,0,0),self.image.get_rect(),2)
+        # pygame.draw.rect(self.image,(255,0,0),self.image.get_rect(),2)
         self.rect = self.image.get_rect()
         if pygame.mixer.get_init():
             self.sound = pygame.mixer.Sound("%s/steam1.wav"%constants.AUDIO_DIR)
@@ -477,7 +497,9 @@ class SteamGun(Weapon):
     def update(self):
         if self.ship.firing and not self.firing:
             # Activate weapon if we're not shooting but the ship is
-            self.firing = self.SteamJet(self.fire_images,self)
+            self.firing = self.SteamJet(self.fire_images, self)
+            for i in self.fc:
+                self.firing.add(i)
         if self.firing and not self.ship.firing:
             # Deactivate weapon if we're shooting and the ship stops
             self.firing.kill()
@@ -489,6 +511,7 @@ class IonCanon(Weapon):
     class IonFire(pygame.sprite.Sprite):
         """Ion canon beam"""
         power = 20
+        name = "Ion beam"
         def _laserimage(self, pos, colour, width):
             image = pygame.Surface((width,768), flags = SRCALPHA).convert()
             image.fill(colour)
@@ -562,7 +585,7 @@ class IonCanon(Weapon):
                     colour = 255 - (i/10.0 * 255)
                     self.IonFire(self, i, (-offset, offset - 5), (colour, colour, colour))
                     self.IonFire(self, i, (offset, offset - 5), (colour, colour, colour))
-                self.IonFire(self, 30, (0,0), (255, 255, 255), True)
+                self.IonFire(self, 50, (0,0), (255, 255, 255), True)
                 x, y = self.rect.midtop
                 # IonDischarge((x, y-10))
                 # Explosion(self.rect.midtop, 2,  True)
@@ -589,6 +612,7 @@ class MineGun(Weapon):
 
     class Mine(pygame.sprite.Sprite):
         power = 10
+        name = "Mine"
         def __init__(self, images, cannon, fc):
             super(MineGun.Mine,self).__init__(*self.containers)
             self.images = images
@@ -616,7 +640,7 @@ class MineGun(Weapon):
                 raise
 
         def kill(self):
-            f = Explosion(self.rect.center, 3, False)
+            f = Explosion(self.rect.center, 3, 2)
             f.add(*self.fc)
             pygame.sprite.Sprite.kill(self)
 
