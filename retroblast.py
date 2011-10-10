@@ -109,17 +109,20 @@ def startShooter(disturbance):
     createStarField([jgroup,all]) # StarField background
     ship = sprites.ShipSprite("%s/ship.png"%constants.IMG_DIR,(512,384))
     ship.add(all,jgroup)
-    sprites.Particle.containers = all,jgroup
-    sprites.Explosion.containers = all,jgroup
+    sprites.SheetSprite.containers = all, jgroup
+    sprites.Charge.containers = all
+    sprites.Particle.containers = all, jgroup
+    sprites.Explosion.containers = all, jgroup
+    sprites.IonDischarge.containers = all, jgroup
     sprites.StatusPanel.containers = all
     spanel = sprites.StatusPanel(ship)
     multiplier = 1
-    sg = sprites.SteamGun(constants.TOP,[all,weapons,jgroup],[weapon_fire,all,jgroup])
-    l1 = sprites.MineGun(constants.RIGHT,[all,weapons,jgroup],[weapon_fire,all,jgroup],engine = propulsion.Engine("%s/bar.json"%constants.DATA_DIR))
-    l2 = sprites.Laser(constants.LEFT,[all,weapons,jgroup],[weapon_fire,all,jgroup])
+    sg = sprites.SteamGun(constants.TOP,[all,weapons,jgroup],[weapon_fire, all, jgroup])
+    l1 = sprites.MineGun(constants.RIGHT,[all,weapons,jgroup],[weapon_fire, all, jgroup],engine = propulsion.Engine("%s/bar.json"%constants.DATA_DIR))
+    l2 = sprites.IonCanon(constants.LEFT,[all,weapons,jgroup],[weapon_fire, all, jgroup])
     ship.attach(sg)
     # ship.attach(l1)
-    # ship.attach(l2)
+    ship.attach(l2)
     deadtimer = 50
     while 1:
         clock.tick(20)

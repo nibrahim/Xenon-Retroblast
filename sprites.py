@@ -1,5 +1,6 @@
 import random
 import pygame
+import pygame.gfxdraw
 import logging
 from pygame.locals import *
 
@@ -42,6 +43,30 @@ class SheetSprite(pygame.sprite.Sprite):
     
 
     
+class Charge(pygame.sprite.Sprite):
+    def __init__(self, pos, limit, size):
+        super(Charge, self).__init__(self.containers)
+        x, y = size
+        self.image = pygame.Surface(size).convert()
+        colour = random.randrange(125, 200)
+        pygame.gfxdraw.filled_circle(self.image, x/2, x/2, x/2, (colour, colour, colour))
+        self.rect = self.image.get_rect()
+        self.rect.center = pos
+        self.limit = limit
+        self.counter = 10
+
+    def update(self):
+        x, y = self.rect.center
+        lx, ly = self.limit
+        if x > lx: x -= 2
+        if x < lx: x += 2
+        if y > ly: y -= 2
+        if y < ly: y += 2
+        self.counter -= 1
+        self.rect.center = x, y
+        if not self.counter:
+            self.kill()
+
 
 
 class Particle(pygame.sprite.Sprite):
@@ -79,7 +104,14 @@ class Explosion(SheetSprite):
             sheet = "%s/colour-explosion.png"%constants.IMG_DIR
         else:
             sheet = "%s/explosion.png"%constants.IMG_DIR
-        super(Explosion,self).__init__(pos, 48, 16, sheet, scale = size * 48)
+        super(Explosion, self).__init__(pos, 48, 16, sheet, scale = size * 48)
+
+
+class IonDischarge(SheetSprite):
+    """Ion Canon IonDischarge"""
+    def __init__(self, pos):
+        super(IonDischarge, self).__init__(pos, 50, 10, "%s/ion-discharge.png"%constants.IMG_DIR, scale = 50, colorkey = False)
+
 
 
 class Romulan(pygame.sprite.Sprite):
@@ -118,6 +150,7 @@ class DisturbanceSprite(pygame.sprite.Sprite):
         self.image = pygame.image.load(image).convert_alpha()
         self.orig_image = self.image
         self.rect = self.image.get_rect()
+
     def update(self):
         dist_pos = (random.randrange(1024),
                     random.randrange(752))
@@ -133,6 +166,7 @@ class CrackSprite(pygame.sprite.Sprite):
         self.rect = self.image.get_rect()
         self.rect.center = (0,384)
         self.visible = False
+
     def update(self):
         if self.visible:
             self.visible = False
@@ -307,17 +341,21 @@ class Weapon(pygame.sprite.Sprite):
         
 class Laser(Weapon):
     name = "Laser"
+
     class LaserFire(pygame.sprite.Sprite):
+        power = 10
         def _laserimage(self,pos):
             image = pygame.Surface((3,768)).convert()
             image.fill((128,128,128))
             return image
+
         def __init__(self,canon):
             super(Laser.LaserFire,self).__init__(self.containers)
             self.image = self._laserimage(canon.rect.midtop)
             self.rect = self.image.get_rect()
             self.canon = canon
             self.rect.midbottom = self.canon.rect.midtop
+
         def update(self):
             self.rect.midbottom = self.canon.rect.midtop
             c = random.randrange(128,255)
@@ -405,7 +443,6 @@ class SteamGun(Weapon):
             try:
                 self.image = self.images[int(self.index)]
             except IndexError:
-                print self.index
                 raise
             self.rect = self.image.get_rect()
             self.rect.midbottom = self.gun.rect.midtop
@@ -446,11 +483,113 @@ class SteamGun(Weapon):
             self.firing.kill()
             self.firing = False
 
+class IonCanon(Weapon):
+    name = "Ion canon"
+
+    class IonFire(pygame.sprite.Sprite):
+        """Ion canon beam"""
+        power = 20
+        def _laserimage(self, pos, colour, width):
+            image = pygame.Surface((width,768), flags = SRCALPHA).convert()
+            image.fill(colour)
+            self.counter = 20
+            return image
+
+        def __init__(self, canon, width, offset, colour, volatile = False):
+            super(IonCanon.IonFire, self).__init__(self.containers)
+            self.canon = canon
+            x, y = self.canon.rect.midtop
+            x += offset[0]
+            y += offset[1]
+            self.image = self._laserimage((x, y), colour, width)
+            self.rect = self.image.get_rect()
+            self.colour = colour
+            self.offset = offset
+            self.rect.midbottom = x, y
+            self.volatile = volatile
+
+        def update(self):
+            x, y = self.canon.rect.midtop
+            x += self.offset[0]
+            y += self.offset[1]
+            self.rect.midbottom = x, y
+            self.image.fill(self.colour)
+
+            self.counter -= 1
+
+            if self.volatile:
+                r, g, b = (x/4 for x in self.colour)
+                self.image.fill((r, g, b))
+                self.colour = (r, g, b)
+                if self.counter == 17:
+                    self.kill()
+
+            if not self.volatile and not self.counter:
+                self.kill()
+
+
+
+    def __init__(self, position, weapon_containers, fire_containers, engine = False):
+        super(IonCanon,self).__init__(weapon_containers, engine = engine)
+        self.IonFire.containers = fire_containers
+        self.image = pygame.image.load("%s/ion-canon.png"%constants.IMG_DIR).convert_alpha()
+        self.rect = self.image.get_rect()
+        self.position = position
+        self.firing = False
+        self.recharging = False
+        self.charge_time = 0
+        self.fc = fire_containers
+
+
+    def update(self):
+        if self.ship.firing and not self.firing and not self.recharging:
+            # Start charging weapon
+            self.charge_time += 1
+            x0, y0 = self.rect.midtop
+            x1, y1 = self.rect.midbottom
+            size = random.randrange(7, 14)
+            Charge((x0 + random.randrange(-20,20), y0 - random.randrange(15,25)),
+                   (x0, y0),
+                   (size, size))
+            Charge((x1 + random.randrange(-20,20), y1 + random.randrange(15,25)),
+                   (x1, y1),
+                   (size, size))
+
+            if self.charge_time == 20:
+                # Charged. Fire it!
+                for i in range(10, 1, -2):
+                    offset = i/2
+                    colour = 255 - (i/10.0 * 255)
+                    self.IonFire(self, i, (-offset, offset - 5), (colour, colour, colour))
+                    self.IonFire(self, i, (offset, offset - 5), (colour, colour, colour))
+                self.IonFire(self, 30, (0,0), (255, 255, 255), True)
+                x, y = self.rect.midtop
+                # IonDischarge((x, y-10))
+                # Explosion(self.rect.midtop, 2,  True)
+                self.charge_time = -50
+                self.firing = False
+                self.recharging = True
+                
+        if self.charge_time < 0:
+            # Recharge
+            self.charge_time += 1
+
+        if self.charge_time == 0:
+            # Recharged
+            self.recharging = False
+
+        if not self.ship.firing and not self.recharging:
+            # Charging interrupted
+            self.charge_time = 0
+        
+
 
 class MineGun(Weapon):
     name = "Mine gun"
+
     class Mine(pygame.sprite.Sprite):
-        def __init__(self,images,cannon,fc):
+        power = 10
+        def __init__(self, images, cannon, fc):
             super(MineGun.Mine,self).__init__(*self.containers)
             self.images = images
             self.image = self.images[0]
@@ -474,7 +613,6 @@ class MineGun(Weapon):
             try:
                 self.image = self.images[int(self.index)]
             except IndexError:
-                print self.index
                 raise
 
         def kill(self):
