@@ -1,12 +1,12 @@
 import random
 import pygame
 import pygame.gfxdraw
-import logging
 from pygame.locals import *
 
 import constants
 import propulsion
-    
+
+import misc
 
 class SheetSprite(pygame.sprite.Sprite):
     """
@@ -68,36 +68,6 @@ class Charge(pygame.sprite.Sprite):
             self.kill()
 
 
-
-class Particle(pygame.sprite.Sprite):
-    def __init__(self, pos, vx, vy, ax, ay, size, colorstructure):
-        super(Particle,self).__init__(self.containers)
-        self.vx, self.vy, self.ax, self.ay = vx, vy, ax, ay
-        self.images = []
-        for x in colorstructure:
-            start, end, duration = x
-            startr, startg, startb = start
-            endr, endg, endb = end
-            def f(s, e, t):
-                val = s + int((e - s)*(t/float(duration)))
-                return val
-            for t in range(duration):
-                image = pygame.Surface((size, size)).convert()
-                image.fill((f(startr, endr, t),
-                            f(startg, endg, t),
-                            f(startb, endb, t)))
-                self.images.append(image)
-        self.image = self.images[0]
-        self.rect = self.image.get_rect(center = pos)
-    def update(self):
-        self.rect.move_ip(self.vx, self.vy)
-        self.vx = self.vx + self.ax
-        self.vy = self.vy + self.ay
-        if not self.images:
-            self.kill()
-        else:
-            self.image = self.images.pop(0)
-            
 class Explosion(SheetSprite):
     def __init__(self, pos, size, typ = 1):
         if typ == 1:
@@ -117,218 +87,6 @@ class IonDischarge(SheetSprite):
     def __init__(self, pos):
         super(IonDischarge, self).__init__(pos, 50, 10, "%s/ion-discharge.png"%constants.IMG_DIR, scale = 50, colorkey = False)
 
-
-
-class Romulan(pygame.sprite.Sprite):
-    def __init__(self, ship, egroup):
-        pygame.sprite.Sprite.__init__(self)
-        self.image = pygame.image.load("%s/enemy1.png"%constants.IMG_DIR).convert_alpha()
-        self.image.set_colorkey(constants.BLACK)
-        self.rect = self.image.get_rect()
-        x,y = random.randrange(1024),0
-        self.rect.center = (x,y)
-        self.vx = random.randrange(1,20)
-        self.vy = random.randrange(1,20)
-        self.ship = ship
-        self.alive = True
-        self.direction_counter = 0
-        self.group = egroup
-        ship_pos = lambda : self.ship.rect.center
-        self.engine = iter(propulsion.Engine("%s/foo.json"%constants.DATA_DIR,ship_pos))
-        self.health = 100
-
-    def update(self):
-        x,y = self.engine.next()
-        if x>1024 or y>752:
-            pygame.sprite.Sprite.kill(self)
-        self.rect.center = (x,y)
-
-    def kill(self):
-        Explosion(self.rect.center, 2,  2)
-        self.ship.score += 5
-        if self.sound:
-            self.sound.play(0)
-        super(Romulan, self).kill()
-
-    def damage(self, weapon):
-        for i in range(2):
-            x0, y0 = self.rect.center
-            Damage((random.randrange(x0-10,x0+10), random.randrange(y0-10,y0+10)))
-        self.health -= weapon.power
-        if self.health <= 0:
-            self.kill()
-        
-        
-class DisturbanceSprite(pygame.sprite.Sprite):
-    def __init__(self,image):
-        pygame.sprite.Sprite.__init__(self)
-        self.image = pygame.image.load(image).convert_alpha()
-        self.orig_image = self.image
-        self.rect = self.image.get_rect()
-
-    def update(self):
-        dist_pos = (random.randrange(1024),
-                    random.randrange(752))
-        dist_rot = random.randrange(180)
-        self.image = pygame.transform.rotate(self.image, dist_rot).convert_alpha()
-        self.rect.center = dist_pos
-
-class CrackSprite(pygame.sprite.Sprite):
-    def __init__(self,image):
-        pygame.sprite.Sprite.__init__(self)
-        self.image = pygame.image.load(image).convert_alpha()
-        self.orig_image = self.image
-        self.rect = self.image.get_rect()
-        self.rect.center = (0,384)
-        self.visible = False
-
-    def update(self):
-        if self.visible:
-            self.visible = False
-            crack = 0 + random.randrange(1024)
-            self.rect.center = (crack,384)
-        else:
-            self.visible = True
-
-class ShipSprite(pygame.sprite.Sprite):
-    def __init__(self, image, position, sound):
-        pygame.sprite.Sprite.__init__(self)
-        self.sound = pygame.mixer.Sound(sound)
-        self.image = pygame.image.load(image).convert_alpha()
-        self.image.set_colorkey(constants.BLACK)
-        self.rect = self.image.get_rect()
-        self.rect.center = position
-        self.firing = False # Are we firing?
-        self.energy = 100 # Energy
-        self.vx, self.vy = (0,0) # X and Y velocities
-        self.tp = 10 # Thruster power
-        self.maxvel = 20 # Maximum velocity
-        self.weapons = [] # List of weapons
-        self.score = 0 # Score
-
-    def move(self,direction):
-        logging.debug("MOVE: Direction is %s"%direction)
-        if direction in (constants.RIGHT,constants.LEFT):
-            self.vx = {constants.RIGHT :  self.tp,
-                       constants.LEFT  : -self.tp}[direction]
-        if direction in (constants.TOP,constants.BOTTOM):
-            self.vy = {constants.TOP   : -self.tp,
-                       constants.BOTTOM:  self.tp}[direction]
-        logging.debug("MOVE: New velocities are %d,%d"%(self.vx,self.vy))
-
-    def stop(self,direction):
-        logging.debug("MOVE: Direction is %s"%direction)
-        if direction in (constants.RIGHT,constants.LEFT):
-            self.vx = 0
-        if direction in (constants.TOP,constants.BOTTOM):
-            self.vy = 0
-        logging.debug("MOVE: New velocities are %d,%d"%(self.vx,self.vy))
-
-    def update(self):
-        cx,cy = self.rect.center
-        cx+=self.vx
-        cy+=self.vy
-        if cx > 1024:
-            cx = 1024
-        if cy > 700:
-            cy = 700
-        if cx < 0:
-            cx =0
-        if cy < 0:
-            cy = 0
-        self.rect.center = (cx,cy)
-        for i in self.weapons:
-            i.rect.center = (cx + i.offset[0],
-                             cy + i.offset[1])
-        self.vx *= 1.2
-        self.vy *= 1.2
-        if self.vx >= self.maxvel:
-            self.vx = self.maxvel
-        if self.vx <= -self.maxvel:
-            self.vx = -self.maxvel
-        if self.vy >= self.maxvel:
-            self.vy = self.maxvel
-        if self.vy <= -self.maxvel:
-            self.vy = -self.maxvel
-
-    def fire(self):
-        logging.debug("WEAPON : Weapons activated")
-        self.firing = True
-
-    def unfire(self):
-        logging.debug("WEAPON : Weapons deactivated")
-        self.firing = False
-
-    def decrement(self):
-        self.energy -= 10
-        logging.debug("SHIP : Energy %d"%self.energy)
-        if self.energy <= 0:
-            self.kill()
-
-    def attach(self,weapon):
-        logging.debug("WEAPON : Attaching %s"%weapon.name)
-        weapon.ship = self
-        bounding_rect = self.rect
-        logging.debug("ATTACH : Bounding rectangle is %s centered at %s"%(str(bounding_rect),str(bounding_rect.center)))
-        if self.weapons:
-            logging.debug("ATTACH : Unionising with following rects")
-            for j in self.weapons:
-                logging.debug("ATTACH :  Unionising with %s positioned at %s and centered at %s"%(str(j),str(j.rect),str(j.rect.center)))
-            bounding_rect = self.rect.unionall([x.rect for x in self.weapons])
-        logging.debug("ATTACH : Bounding rectange (after union) is %s centered at %s"%(str(bounding_rect),str(bounding_rect.center)))
-        weapon.rect.center = bounding_rect.center
-        logging.debug("ATTACH : Weapon rect is %s centered at %s"%(str(weapon.rect),str(weapon.rect.center)))
-        if weapon.position == constants.TOP:
-            weapon.rect.bottom = bounding_rect.top
-        elif weapon.position == constants.BOTTOM:
-            weapon.rect.top = bounding_rect.bottom
-        elif weapon.position == constants.LEFT:
-            weapon.rect.right = bounding_rect.left - 10
-        elif weapon.position == constants.RIGHT:
-            weapon.rect.left = bounding_rect.right + 10
-        logging.debug("ATTACH : Weapon attached at %s with center %s"%(str(weapon.rect),str(weapon.rect.center)))
-        if not weapon.coupled:
-            weapon.couple()
-            self.weapons.append(weapon)
-        weapon.offset = (weapon.rect.center[0] - self.rect.center[0] ,
-                         weapon.rect.center[1] - self.rect.center[1] )
-
-    def kill(self):
-        pygame.sprite.Sprite.kill(self)
-        x, y = self.rect.center
-        if self.sound:
-            self.sound.play(0)
-        for i in self.weapons:
-            i.kill()
-        Explosion((x, y), 5, 1)
-
-class StarSprite(pygame.sprite.Sprite):
-    def __init__(self, position, brightness, velocity, min_velocity, acceleration):
-        pygame.sprite.Sprite.__init__(self)
-        self.brightness = brightness
-        color = (255*brightness,255*brightness,255*brightness)
-        self.image = pygame.Surface((3,3)).convert()
-        pygame.draw.circle(self.image,color,(0,0),3,0)
-        self.rect = self.image.get_rect()
-        self.rect.center = position
-        self.acceleration = acceleration
-        self.velocity = velocity
-        self.min_velocity = min_velocity
-
-    def update(self):
-        if self.velocity != 0:
-            c = random.randrange(0,int(255*self.brightness))
-            pygame.draw.circle(self.image,(c,c,c),(0,0),1,0)
-        if self.velocity <= self.min_velocity:
-            self.velocity = self.min_velocity
-        else:
-            self.velocity = self.velocity + self.acceleration
-        self.rect.center = (self.rect.center[0],self.rect.center[1]+self.velocity)
-        if self.rect.center[1] >= 768:
-            self.rect.center = ((random.randrange(1024),0))
-
-            
-# ---------------------- Weapons -----------------------
 
 
 class Weapon(pygame.sprite.Sprite):
@@ -426,11 +184,11 @@ class Laser(Weapon):
             for i in range(10): # Blow off steam. Particle effects. :)
                 c = random.randrange(0, 128)
                 x,y = random.randrange(-5,5),random.randrange(-5,5)
-                Particle((self.rect.center[0]+x,self.rect.center[1]+y),
-                         random.randrange(-2, 2), random.randrange(-1,2),0,0,random.randrange(3),
-                         [((100, 100, 100), (c, c, c), 12),
-                          ((c, c, c), (50, 50, 50), 24)
-                          ])
+                misc.Particle((self.rect.center[0]+x,self.rect.center[1]+y),
+                              random.randrange(-2, 2), random.randrange(-1,2),0,0,random.randrange(3),
+                              [((100, 100, 100), (c, c, c), 12),
+                               ((c, c, c), (50, 50, 50), 24)
+                               ])
             if self.image == self.hot:
                 self.image = self.cold
             else:
@@ -677,63 +435,3 @@ class MineGun(Weapon):
             if self.firing.lifetime == 0:
                 self.firing.kill()
                 self.firing = False
-
-class EnergyBar(pygame.sprite.Sprite):
-    def __init__(self,ship):
-        pygame.sprite.Sprite.__init__(self, self.containers)
-        self.max_width = 500
-        self.image = pygame.Surface((500,10)).convert_alpha()
-        self.ship = ship
-        self.width = int((self.ship.energy/100) * self.max_width) 
-        pygame.draw.rect(self.image, (0,0,0), (1,1,self.width,8,),0)
-        pygame.draw.rect(self.image, (150,150,150), (1,1,self.width,8,),0)
-        self.rect = self.image.get_rect()
-        self.rect.topleft = (12,748)
-        self.last_energy = 0
-        self.glowcounter = 150
-
-    def update(self):
-        self.width = int((self.ship.energy/100.0) * self.max_width)
-        self.image.fill((0,0,0,0))
-        #         pygame.draw.rect(self.image, (0,0,0,0), (0,0,self.max_width,10,),0)
-        pygame.draw.rect(self.image, (150,150,150), (1,1,self.width,8,),0)
-        if self.ship.energy != self.last_energy:
-            self.glowcounter = 0
-        if self.glowcounter != 150:
-            self.glowcounter += 10
-            pygame.draw.rect(self.image, (self.glowcounter,self.glowcounter,self.glowcounter), (1,1,self.width,8,),0)
-        else:
-            pygame.draw.rect(self.image, (150,150,150), (1,1,self.width,8,),0)
-        self.last_energy = self.ship.energy
-
-class ScoreBar(pygame.sprite.Sprite):
-    def __init__(self,ship):
-        pygame.sprite.Sprite.__init__(self, self.containers)
-        self.font = pygame.font.Font('%s/jGara2.ttf'%constants.DATA_DIR,20)
-        self.image = pygame.Surface((200,25)).convert_alpha()
-        self.image.fill((100,100,100,0))
-        self.rect = self.image.get_rect()
-        self.rect.topleft = (550,740)
-        self.ship = ship
-        score = self.font.render("score  %010d"%self.ship.score,True,(20,20,20))
-        self.image.fill((100,100,100,0))
-        self.image.blit(score,(0,0))
-    def update(self):
-        score = self.font.render("score  %010d"%self.ship.score,True,(20,20,20))
-        self.image.fill((100,100,100,0))
-        self.image.blit(score,(0,0))
-                        
-class StatusPanel(pygame.sprite.Sprite):
-    def __init__(self,ship):
-        pygame.sprite.Sprite.__init__(self, self.containers)
-        self.image = pygame.image.load("%s/cpanel.png"%constants.IMG_DIR).convert_alpha()
-        self.rect = self.image.get_rect()
-        self.rect.center = (512,752,)
-        EnergyBar.containers = self.containers
-        self.energy_bar = EnergyBar(ship)
-        ScoreBar.containers = self.containers
-        self.score_bar = ScoreBar(ship)
-
-            
-    
-    
