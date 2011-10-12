@@ -76,6 +76,10 @@ class Explosion(SheetSprite):
         if typ == 2:
             sheet = "%s/explosion1.png"%constants.IMG_DIR
             super(Explosion, self).__init__(pos, 64, 40, sheet, scale = size * 64)
+        if typ == 3:
+            sheet = "%s/explosion-mine.png"%constants.IMG_DIR
+            super(Explosion, self).__init__(pos, 64, 40, sheet, scale = size * 64)
+
 
 class Damage(SheetSprite):
     def __init__(self, pos):
@@ -320,6 +324,12 @@ class IonCanon(Weapon):
         self.recharging = False
         self.charge_time = 0
         self.fc = fire_containers
+        self.sound_playing = False
+        if pygame.mixer.get_init():
+            self.sound = pygame.mixer.Sound("%s/ion-canon2.wav"%constants.AUDIO_DIR)
+            self.sound.set_volume(0.1)
+        else:
+            self.sound = False
 
 
     def update(self):
@@ -329,6 +339,9 @@ class IonCanon(Weapon):
             x0, y0 = self.rect.midtop
             x1, y1 = self.rect.midbottom
             size = random.randrange(7, 14)
+            if self.sound:
+                self.sound_playing = True
+                self.sound.play(0)
             Charge((x0 + random.randrange(-20,20), y0 - random.randrange(15,25)),
                    (x0, y0),
                    (size, size))
@@ -336,7 +349,7 @@ class IonCanon(Weapon):
                    (x1, y1),
                    (size, size))
 
-            if self.charge_time == 20:
+            if self.charge_time == 18:
                 # Charged. Fire it!
                 for i in range(10, 1, -2):
                     offset = i/2
@@ -362,6 +375,8 @@ class IonCanon(Weapon):
         if not self.ship.firing and not self.recharging:
             # Charging interrupted
             self.charge_time = 0
+            if self.sound_playing:
+                self.sound.stop()
         
 
 
@@ -398,8 +413,9 @@ class MineGun(Weapon):
                 raise
 
         def kill(self):
-            f = Explosion(self.rect.center, 3, 2)
+            f = Explosion(self.rect.center, 3, 3)
             f.add(*self.fc)
+            f.power = 50
             pygame.sprite.Sprite.kill(self)
 
     def _getMineImages(self,spritefile,colorkey = constants.BLUE):
