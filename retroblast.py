@@ -35,11 +35,11 @@ def createStarField(groups):
     closest = pygame.sprite.RenderPlain()
     for i in range(1,100):
         x,y = random.randrange(1024),random.randrange(768)
-        sprites.StarSprite((x,y),0.2,25,0,constants.STARFIELD_INIT_DECELERATION).add(far_away,*groups)
-        x,y = random.randrange(1024),random.randrange(768)
-        sprites.StarSprite((x,y),0.5,50,4,constants.STARFIELD_INIT_DECELERATION).add(closer,*groups)
-        x,y = random.randrange(1024),random.randrange(768)
-        sprites.StarSprite((x,y),0.8,75,6,constants.STARFIELD_INIT_DECELERATION).add(closest,*groups)
+        sprites.StarSprite((x, y), 0.2, 25, 0, constants.STARFIELD_INIT_DECELERATION).add(far_away, *groups)
+        x, y = random.randrange(1024), random.randrange(768)
+        sprites.StarSprite((x, y), 0.5, 50, 4, constants.STARFIELD_INIT_DECELERATION).add(closer, *groups)
+        x, y = random.randrange(1024), random.randrange(768)
+        sprites.StarSprite((x, y), 0.8, 75, 6, constants.STARFIELD_INIT_DECELERATION).add(closest, *groups)
     return far_away,closer
 
 def createDisturbances(sprite_dir, ndist):
@@ -159,7 +159,7 @@ def startShooter(disturbance):
         all.draw(screen)
         # Create new enemies if anyone is destroyed
         if len(enemies.sprites()) < 1:
-            sprites.Romulan(ship,enemies).add(all,jgroup,enemies)
+            sprites.Romulan(ship, enemies).add(all,jgroup,enemies)
 
         # Check collisions
         for e, w in pygame.sprite.groupcollide(enemies, weapon_fire, False, False).iteritems():
@@ -186,7 +186,7 @@ def initLogger():
                         
 def initialiseGame():
     global screen,empty,clock
-    screen = pygame.display.set_mode(constants.SCREENRECT.size,DOUBLEBUF)#)|FULLSCREEN)
+    screen = pygame.display.set_mode(constants.SCREENRECT.size,DOUBLEBUF | FULLSCREEN)
     empty = pygame.Surface(constants.SCREENRECT.size).convert()
     #     empty = pygame.image.load("%s/whorl.png"%constants.IMG_DIR).convert()
     clock = pygame.time.Clock()
@@ -208,7 +208,7 @@ def main():
     disturbance = createDisturbances('%s/crackles'%constants.IMG_DIR,30)
     # displayCredits(disturbance)
     if pygame.mixer.get_init():
-        # # pygame.mixer.music.load("%s/phoenix.ogg"%constants.AUDIO_DIR)
+        # pygame.mixer.music.load("%s/phoenix.ogg"%constants.AUDIO_DIR)
         # pygame.mixer.music.load("%s/megablast.ogg"%constants.AUDIO_DIR)
         # pygame.mixer.music.set_volume(0.8)
         # pygame.mixer.music.play(-1)

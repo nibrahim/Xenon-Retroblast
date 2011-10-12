@@ -9,13 +9,18 @@ import propulsion
 
 from weapons import Explosion, Damage
 
+class RomulanFire(pygame.sprite.Sprite):
+    def __init__(self):
+        pass
+        
+
 class Romulan(pygame.sprite.Sprite):
     def __init__(self, ship, egroup):
         pygame.sprite.Sprite.__init__(self)
         self.image = pygame.image.load("%s/enemy1.png"%constants.IMG_DIR).convert_alpha()
         self.image.set_colorkey(constants.BLACK)
         self.rect = self.image.get_rect()
-        x,y = random.randrange(1024),0
+        x,y = random.randrange(1024), random.randrange(768)
         self.rect.center = (x,y)
         self.vx = random.randrange(1,20)
         self.vy = random.randrange(1,20)
@@ -23,8 +28,7 @@ class Romulan(pygame.sprite.Sprite):
         self.alive = True
         self.direction_counter = 0
         self.group = egroup
-        ship_pos = lambda : self.ship.rect.center
-        self.engine = iter(propulsion.Engine("%s/foo.json"%constants.DATA_DIR,ship_pos))
+        self.engine = iter(propulsion.Engine("%s/foo.json"%constants.DATA_DIR, self.rect.center))
         self.health = 100
 
     def update(self):

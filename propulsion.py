@@ -15,10 +15,12 @@ PI,E = cmath.pi,cmath.e
 
 
 class Engine(object):
-    def __init__(self,data_file,cursor_pos = False):
+    def __init__(self, data_file, start = False, cursor_pos = False):
         self.time = 0
         self.cursor_pos = cursor_pos
         self._load_data(data_file)
+        if start:
+            self.cpos = start
 
 
     def _load_data(self,f):
@@ -33,7 +35,7 @@ class Engine(object):
         'homrad'  : 5
         }
         """
-
+        
         with open(f) as ip:
             path = json.load(ip)
 
