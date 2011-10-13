@@ -93,14 +93,14 @@ class Boss(pygame.sprite.Sprite):
             self.fire_counter = 0
         
         if self.laser:
-            self.laser_counter -= 0
+            self.laser_counter -= 2
             if not self.laser_counter:
                 self.laser.kill(False)
                 self.laser = False
         
         if not self.laser:
             self.laser_counter += 1
-            if self.laser_counter == 20:
+            if self.laser_counter == 30:
                 self.laser = BossFireLaser(self)
 
     def kill(self):
