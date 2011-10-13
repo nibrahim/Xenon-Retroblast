@@ -79,6 +79,9 @@ class Explosion(SheetSprite):
         if typ == 3:
             sheet = "%s/explosion-mine.png"%constants.IMG_DIR
             super(Explosion, self).__init__(pos, 64, 40, sheet, scale = size * 64)
+        if typ == 4:
+            sheet = "%s/ship-damage.png"%constants.IMG_DIR
+            super(Explosion, self).__init__(pos, 32, 12, sheet, scale = size * 32)
 
 
 class Damage(SheetSprite):

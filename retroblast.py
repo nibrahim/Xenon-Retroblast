@@ -106,6 +106,7 @@ def startShooter(disturbance):
     enemies = pygame.sprite.RenderPlain() # For enemy ships
     weapons = pygame.sprite.RenderPlain() # For weapons
     weapon_fire = pygame.sprite.RenderPlain() # For weapon fire
+    enemy_fire = pygame.sprite.RenderPlain() # For enemy bullets
     createStarField([jgroup,all]) # StarField background
     ship = sprites.ShipSprite("%s/ship.png"%constants.IMG_DIR,(512,384), "%s/ship-exploding.wav"%constants.AUDIO_DIR)
     ship.add(all, jgroup)
@@ -116,6 +117,7 @@ def startShooter(disturbance):
     sprites.Damage.containers = all, jgroup
     sprites.IonDischarge.containers = all, jgroup
     sprites.StatusPanel.containers = all
+    sprites.EnemyFire.containers = all, jgroup, enemy_fire
     spanel = sprites.StatusPanel(ship)
     multiplier = 1
     sg = sprites.SteamGun(constants.TOP, [all, weapons, jgroup], [weapon_fire, all, jgroup])
@@ -128,6 +130,11 @@ def startShooter(disturbance):
     # ship.attach(l1)
     ship.attach(l2)
     deadtimer = 100
+    for i in range(0, 500, 50):
+        sprites.Romulan(ship, enemies, pos = ((700 + i), (600 + i))).add(all,jgroup,enemies)
+
+    sprites.Boss(ship, enemies, pos = (100, 100)).add(all,jgroup,enemies)
+
     while True:
         clock.tick(20)
         for event in pygame.event.get():
@@ -158,16 +165,25 @@ def startShooter(disturbance):
         # Draw all the sprites and flip the display
         all.draw(screen)
         # Create new enemies if anyone is destroyed
-        if len(enemies.sprites()) < 1:
-            sprites.Romulan(ship, enemies).add(all,jgroup,enemies)
+        if len(enemies.sprites()) < 3:
+            for i in range(0, 500, 50):
+                sprites.Romulan(ship, enemies, pos = ((100 + i), (600 + i))).add(all,jgroup,enemies)
 
-        # Check collisions
+
+        # Ship damage
+        pygame.sprite.spritecollide(ship, enemy_fire, True)
+
+        # Enemy damage
         for e, w in pygame.sprite.groupcollide(enemies, weapon_fire, False, False).iteritems():
             for i in w:
                 e.damage(i)
+
+        # Weapon attachment
         new_weapons = pygame.sprite.spritecollide(ship, weapons, False)
         for i in new_weapons:
             ship.attach(i)
+
+        # Ship destruction
         if not ship.groups():
             deadtimer -= 1
             if not deadtimer:
@@ -199,6 +215,9 @@ def initialiseGame():
     if pygame.mixer.get_init():
         sprites.Romulan.sound = pygame.mixer.Sound("%s/explosion.wav"%constants.AUDIO_DIR)
         sprites.Romulan.sound.set_volume(0.1)
+        sprites.Boss.sound = pygame.mixer.Sound("%s/ship-exploding.wav"%constants.AUDIO_DIR)
+        sprites.Boss.sound.set_volume(0.5)
+
     else:
         sprites.Romulan.sound = False
 
@@ -208,10 +227,10 @@ def main():
     disturbance = createDisturbances('%s/crackles'%constants.IMG_DIR,30)
     # displayCredits(disturbance)
     if pygame.mixer.get_init():
-        # pygame.mixer.music.load("%s/phoenix.ogg"%constants.AUDIO_DIR)
-        # pygame.mixer.music.load("%s/megablast.ogg"%constants.AUDIO_DIR)
-        # pygame.mixer.music.set_volume(0.8)
-        # pygame.mixer.music.play(-1)
+        pygame.mixer.music.load("%s/phoenix.ogg"%constants.AUDIO_DIR)
+        pygame.mixer.music.load("%s/megablast.ogg"%constants.AUDIO_DIR)
+        pygame.mixer.music.set_volume(0.8)
+        pygame.mixer.music.play(-1)
         pass
     screen.blit(empty,(0,0))
     startShooter(disturbance)

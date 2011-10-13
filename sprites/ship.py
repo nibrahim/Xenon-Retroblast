@@ -18,7 +18,7 @@ class ShipSprite(pygame.sprite.Sprite):
         self.rect = self.image.get_rect()
         self.rect.center = position
         self.firing = False # Are we firing?
-        self.energy = 100 # Energy
+        self.energy = constants.SHIP_HEALTH # Energy
         self.vx, self.vy = (0,0) # X and Y velocities
         self.tp = 10 # Thruster power
         self.maxvel = 20 # Maximum velocity
@@ -78,11 +78,17 @@ class ShipSprite(pygame.sprite.Sprite):
         logging.debug("WEAPON : Weapons deactivated")
         self.firing = False
 
-    def decrement(self):
-        self.energy -= 10
-        logging.debug("SHIP : Energy %d"%self.energy)
-        if self.energy <= 0:
-            self.kill()
+    def decrement(self, q = 10):
+        if self.energy > 0:
+            x,y = self.rect.center
+            for i in range(2):
+                Explosion((x + random.randrange(-20, 20),
+                           y + random.randrange(-20, 20)),
+                          1, 4)
+            self.energy -= q
+            logging.debug("SHIP : Energy %d"%self.energy)
+            if self.energy <= 0:
+                self.kill()
 
     def attach(self,weapon):
         logging.debug("WEAPON : Attaching %s"%weapon.name)
@@ -120,7 +126,3 @@ class ShipSprite(pygame.sprite.Sprite):
         for i in self.weapons:
             i.kill()
         Explosion((x, y), 10, 1)
-
-
-
-

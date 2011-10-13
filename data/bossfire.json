@@ -1,0 +1,7 @@
+
+{"initmag": 2, 
+"homvel": 10, 
+"start": [0, 100], 
+"initang": 0, 
+"path": [[0, 0, 20], [10, -90, 1], [0, 0, null]], 
+"homrad": 1000}

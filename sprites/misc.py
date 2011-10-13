@@ -39,7 +39,7 @@ class EnergyBar(pygame.sprite.Sprite):
         self.max_width = 500
         self.image = pygame.Surface((500,10)).convert_alpha()
         self.ship = ship
-        self.width = int((self.ship.energy/100) * self.max_width) 
+        self.width = int((self.ship.energy/constants.SHIP_HEALTH) * self.max_width) 
         pygame.draw.rect(self.image, (0,0,0), (1,1,self.width,8,),0)
         pygame.draw.rect(self.image, (150,150,150), (1,1,self.width,8,),0)
         self.rect = self.image.get_rect()
@@ -48,7 +48,7 @@ class EnergyBar(pygame.sprite.Sprite):
         self.glowcounter = 150
 
     def update(self):
-        self.width = int((self.ship.energy/100.0) * self.max_width)
+        self.width = int((self.ship.energy/float(constants.SHIP_HEALTH)) * self.max_width)
         self.image.fill((0,0,0,0))
         #         pygame.draw.rect(self.image, (0,0,0,0), (0,0,self.max_width,10,),0)
         pygame.draw.rect(self.image, (150,150,150), (1,1,self.width,8,),0)
