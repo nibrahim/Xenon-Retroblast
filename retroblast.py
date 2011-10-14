@@ -139,7 +139,7 @@ def startShooter(disturbance):
         clock.tick(20)
         for event in pygame.event.get():
             if event.type == QUIT or (event.type == KEYDOWN and event.key == K_ESCAPE):
-                return
+                ship.decrement(constants.SHIP_HEALTH)
             if event.type == KEYDOWN:
                 #                 logging.debug("Key pressed is %s"%event.key)
                 if event.key == K_DOWN:  ship.move(constants.BOTTOM)
